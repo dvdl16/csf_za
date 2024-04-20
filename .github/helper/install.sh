@@ -40,7 +40,7 @@ sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
 bench get-app https://github.com/frappe/erpnext --branch $TEST_AGAINST_ERPNEXT_VERSION --resolve-deps
-bench get-app --overwrite starpops_custom "${GITHUB_WORKSPACE}"
+bench get-app --overwrite csf_za "${GITHUB_WORKSPACE}"
 bench --verbose setup env --python python3.10
 bench --verbose setup requirements --dev
 
@@ -49,4 +49,4 @@ CI=Yes bench build --app frappe &
 bench --site test_site reinstall --yes
 
 bench --verbose --site test_site install-app erpnext
-bench --verbose --site test_site install-app starpops_custom
+bench --verbose --site test_site install-app csf_za
