@@ -3,5 +3,11 @@
 *.egg-info
 *.swp
 tags
-node_modules
-__pycache__
+csf_za/docs/current
+node_modules/
+cypress/videos
+cypress/screenshots
+csf_za/public/node_modules
+
+# Package management is managed by bench
+yarn.lock
