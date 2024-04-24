@@ -154,7 +154,7 @@ app_license = "mit"
 # Testing
 # -------
 
-# before_tests = "csf_za.install.before_tests"
+before_tests = "csf_za.utils.before_tests"
 
 # Overriding Methods
 # ------------------------------
