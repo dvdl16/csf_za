@@ -1,0 +1,975 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{company}-{tax_period}",
+ "creation": "2024-04-20 13:39:04.138054",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_hli5",
+  "amended_from",
+  "section_vendor",
+  "company",
+  "tax_period",
+  "section_break_bggd",
+  "date_from",
+  "column_break_tqyp",
+  "date_to",
+  "tab_output_tax",
+  "heading_supply_of_goods_andor_services_by_you",
+  "section_break_xecb",
+  "html_cgfg",
+  "button_report_output_a",
+  "column_break_eehn",
+  "standard_rate_main_excl",
+  "column_break_pdbs",
+  "html_ilde",
+  "column_break_tfhk",
+  "standard_rate_main_incl",
+  "section_break_ynce",
+  "html_bace",
+  "button_report_output_b",
+  "column_break_azjz",
+  "standard_rate_capital_excl",
+  "column_break_apaj",
+  "html_xkcb",
+  "column_break_bwyh",
+  "stardard_rate_total",
+  "section_break_fdxe",
+  "html_dueg",
+  "button_report_output_c",
+  "column_break_njvu",
+  "zero_rate_main_excl",
+  "column_break_mepd",
+  "column_break_pqtq",
+  "section_break_vqta",
+  "html_eawy",
+  "button_report_output_d",
+  "column_break_zvqe",
+  "zero_rate_exported_excl",
+  "column_break_qnmo",
+  "column_break_tthu",
+  "section_break_nmxh",
+  "html_ybrz",
+  "button_report_output_e",
+  "column_break_qvio",
+  "exempt_excl",
+  "column_break_gsdq",
+  "column_break_nvru",
+  "section_break_snlj",
+  "heading_supply_of_accommodation",
+  "section_break_oagd",
+  "html_oekt",
+  "column_break_ixcw",
+  "acc_exceed_28_days",
+  "column_break_rnrq",
+  "acc_exceed_28_days_percent",
+  "column_break_uxss",
+  "acc_exceed_28_days_total",
+  "column_break_jovl",
+  "column_break_ubum",
+  "section_break_cpvt",
+  "html_qlld",
+  "column_break_vsnf",
+  "column_break_qvvk",
+  "column_break_hbwi",
+  "acc_not_exceed_28_days",
+  "column_break_sozs",
+  "column_break_wwlr",
+  "section_break_hxxn",
+  "html_rlru",
+  "column_break_sktx",
+  "column_break_xqbm",
+  "column_break_ljpx",
+  "acc_total_excl",
+  "column_break_yekx",
+  "html_ibog",
+  "column_break_corj",
+  "acc_total_incl",
+  "section_break_gcec",
+  "heading_adjustments",
+  "section_break_sdpv",
+  "html_ycfm",
+  "column_break_lumf",
+  "adj_change_in_use_excl",
+  "column_break_svpb",
+  "html_cmyt",
+  "column_break_imxw",
+  "adj_change_in_use_incl",
+  "section_break_fcez",
+  "html_pjkm",
+  "column_break_crpa",
+  "column_break_sqzu",
+  "column_break_vugy",
+  "adj_other_incl",
+  "section_break_ygiq",
+  "heading_total_output_tax",
+  "html_fjss",
+  "section_break_wept",
+  "column_break_nddl",
+  "column_break_ivkt",
+  "column_break_iyyt",
+  "column_break_ymym",
+  "total_output_tax",
+  "tab_input_tax",
+  "heading_input_tax",
+  "section_break_lpdd",
+  "html_mnul",
+  "button_report_input_a",
+  "column_break_wccq",
+  "capital_goods_supplied",
+  "section_break_burg",
+  "html_tcno",
+  "button_report_input_b",
+  "column_break_ykzw",
+  "capital_goods_imported",
+  "section_break_aqsx",
+  "html_sfdt",
+  "button_report_input_c",
+  "column_break_uyvn",
+  "other_goods_supplied",
+  "section_break_puan",
+  "html_xeel",
+  "button_report_input_d",
+  "column_break_oitc",
+  "other_goods_imported",
+  "section_break_rsdj",
+  "heading_adjustments_input_tax",
+  "section_break_zkoq",
+  "html_cxzx",
+  "column_break_zuff",
+  "change_in_use",
+  "section_break_hjfj",
+  "html_tkpt",
+  "column_break_blho",
+  "bad_debts",
+  "section_break_hbav",
+  "html_dxbf",
+  "column_break_oykh",
+  "other",
+  "section_break_brmy",
+  "heading_total_input_tax",
+  "html_pehe",
+  "section_break_mbkg",
+  "column_break_lqwh",
+  "column_break_uvke",
+  "total_input_tax",
+  "section_break_zmzb",
+  "total_vat_payablerefundable",
+  "html_szis",
+  "section_break_klbg",
+  "column_break_kdtx",
+  "column_break_fjnu",
+  "total_vat_payable_refundable",
+  "tab_transactions",
+  "gl_entries"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_hli5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Value-added Tax Return",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_vendor",
+   "fieldtype": "Section Break",
+   "label": "Tax Return Details"
+  },
+  {
+   "description": "e.g. 202506",
+   "fieldname": "tax_period",
+   "fieldtype": "Data",
+   "label": "Tax Period (CCYYMM)"
+  },
+  {
+   "fieldname": "standard_rate_main_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 1\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pdbs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_tfhk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "standard_rate_main_incl",
+   "fieldtype": "Currency",
+   "label": "Stardard rate total 4\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.gl_entries.length > 0",
+   "fieldname": "tab_output_tax",
+   "fieldtype": "Tab Break",
+   "label": "Calculation of Output Tax"
+  },
+  {
+   "fieldname": "column_break_eehn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "standard_rate_capital_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 1\ufe0f\u20e3<sup>a</sup>",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "stardard_rate_total",
+   "fieldtype": "Currency",
+   "label": "Stardard rate total 4\ufe0f\u20e3<sup>a</sup>",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ynce",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_azjz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_apaj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bwyh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "html_cgfg",
+   "fieldtype": "HTML",
+   "options": "Standard Rate (excluding capital goods and/or services and accommodation)"
+  },
+  {
+   "fieldname": "html_ilde",
+   "fieldtype": "HTML",
+   "options": "x <sup>15</sup>/<sub>(100\n + 15) </sub> ="
+  },
+  {
+   "fieldname": "html_bace",
+   "fieldtype": "HTML",
+   "options": "Standard Rate (only capital goods and/or services)"
+  },
+  {
+   "fieldname": "html_xkcb",
+   "fieldtype": "HTML",
+   "options": "x <sup>15</sup>/<sub>(100\n + 15) </sub> ="
+  },
+  {
+   "fieldname": "section_break_xecb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_fdxe",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_dueg",
+   "fieldtype": "HTML",
+   "options": "Zero rate (excluding goods exported)"
+  },
+  {
+   "fieldname": "column_break_njvu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "zero_rate_main_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 2\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_mepd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pqtq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_vqta",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_eawy",
+   "fieldtype": "HTML",
+   "options": "Zero rate (only exported)"
+  },
+  {
+   "fieldname": "column_break_zvqe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "zero_rate_exported_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 2\ufe0f\u20e3<sup>a</sup>",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qnmo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_tthu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_nmxh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_ybrz",
+   "fieldtype": "HTML",
+   "options": "Exempt and non-supplies"
+  },
+  {
+   "fieldname": "column_break_qvio",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exempt_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 3\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gsdq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_nvru",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_snlj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_oagd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_oekt",
+   "fieldtype": "HTML",
+   "options": "Exceeding 28 days"
+  },
+  {
+   "fieldname": "column_break_ixcw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "acc_exceed_28_days",
+   "fieldtype": "Currency",
+   "label": "Amount 5\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_rnrq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "60",
+   "fieldname": "acc_exceed_28_days_percent",
+   "fieldtype": "Percent",
+   "label": "Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_uxss",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acc_exceed_28_days_total",
+   "fieldtype": "Currency",
+   "label": "Total 6\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_jovl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ubum",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_cpvt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_qlld",
+   "fieldtype": "HTML",
+   "options": "Value Not Exceeding 28 days"
+  },
+  {
+   "fieldname": "column_break_vsnf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qvvk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hbwi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "acc_not_exceed_28_days",
+   "fieldtype": "Currency",
+   "label": "Amount 7\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_sozs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wwlr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hxxn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_rlru",
+   "fieldtype": "HTML",
+   "options": "Total (6\ufe0f\u20e3+7\ufe0f\u20e3)"
+  },
+  {
+   "fieldname": "column_break_sktx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xqbm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ljpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acc_total_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 8\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_yekx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "html_ibog",
+   "fieldtype": "HTML",
+   "options": "x <sup>15</sup>/<sub>100 </sub> ="
+  },
+  {
+   "fieldname": "column_break_corj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acc_total_incl",
+   "fieldtype": "Currency",
+   "label": "Amount 9\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "heading_supply_of_goods_andor_services_by_you",
+   "fieldtype": "Heading",
+   "label": "Supply of Goods and/or Services By You"
+  },
+  {
+   "fieldname": "heading_supply_of_accommodation",
+   "fieldtype": "Heading",
+   "label": "Supply of accommodation"
+  },
+  {
+   "fieldname": "section_break_gcec",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "heading_adjustments",
+   "fieldtype": "Heading",
+   "label": "Adjustments"
+  },
+  {
+   "fieldname": "section_break_sdpv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_ycfm",
+   "fieldtype": "HTML",
+   "options": "Change in use and export of second-hand goods"
+  },
+  {
+   "fieldname": "column_break_lumf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "adj_change_in_use_excl",
+   "fieldtype": "Currency",
+   "label": "Amount 1\ufe0f\u20e30\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_svpb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "html_cmyt",
+   "fieldtype": "HTML",
+   "options": "x <sup>15</sup>/<sub>(100\n + 15) </sub> ="
+  },
+  {
+   "fieldname": "column_break_imxw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "adj_change_in_use_incl",
+   "fieldtype": "Currency",
+   "label": "Amount 1\ufe0f\u20e31\ufe0f\u20e3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_fcez",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_pjkm",
+   "fieldtype": "HTML",
+   "options": "Other and Imported services"
+  },
+  {
+   "fieldname": "column_break_crpa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_sqzu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vugy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "adj_other_incl",
+   "fieldtype": "Currency",
+   "label": "Amount 1\ufe0f\u20e32\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "section_break_ygiq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "heading_total_output_tax",
+   "fieldtype": "Heading",
+   "label": "Total Output Tax"
+  },
+  {
+   "fieldname": "section_break_wept",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_nddl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ivkt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_iyyt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ymym",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_output_tax",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "html_fjss",
+   "fieldtype": "HTML",
+   "options": "(4\ufe0f\u20e3 + 4\ufe0f\u20e3<sup>a</sup> + 9\ufe0f\u20e3 + 1\ufe0f\u20e31\ufe0f\u20e3 + 1\ufe0f\u20e32\ufe0f\u20e3)"
+  },
+  {
+   "depends_on": "eval: doc.gl_entries.length > 0",
+   "fieldname": "tab_input_tax",
+   "fieldtype": "Tab Break",
+   "label": "Calculation of Input Tax"
+  },
+  {
+   "fieldname": "heading_input_tax",
+   "fieldtype": "Heading",
+   "label": "Calculation of Input Tax"
+  },
+  {
+   "fieldname": "section_break_lpdd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_mnul",
+   "fieldtype": "HTML",
+   "options": "Capital goods and/or services supplied to you 1\ufe0f\u20e34\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_wccq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "capital_goods_supplied",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_burg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_tcno",
+   "fieldtype": "HTML",
+   "options": "Capital goods imported by you 1\ufe0f\u20e34\ufe0f\u20e3<sup>a</sup>"
+  },
+  {
+   "fieldname": "column_break_ykzw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "capital_goods_imported",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_aqsx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_sfdt",
+   "fieldtype": "HTML",
+   "options": "Other goods and/or services supplied to you (not capital goods) 1\ufe0f\u20e35\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_uyvn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "other_goods_supplied",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_puan",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_xeel",
+   "fieldtype": "HTML",
+   "options": "Other goods imported by you (not capital goods) 1\ufe0f\u20e35\ufe0f\u20e3<sup>a</sup>"
+  },
+  {
+   "fieldname": "column_break_oitc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "other_goods_imported",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rsdj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "heading_adjustments_input_tax",
+   "fieldtype": "Heading",
+   "label": "Adjustments"
+  },
+  {
+   "fieldname": "section_break_zkoq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_cxzx",
+   "fieldtype": "HTML",
+   "options": "Change in use 1\ufe0f\u20e36\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "html_tkpt",
+   "fieldtype": "HTML",
+   "options": "Bad debts 1\ufe0f\u20e37\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "html_dxbf",
+   "fieldtype": "HTML",
+   "options": "Other 1\ufe0f\u20e38\ufe0f\u20e3"
+  },
+  {
+   "fieldname": "column_break_zuff",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "change_in_use",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "bad_debts",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "other",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "section_break_brmy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "heading_total_input_tax",
+   "fieldtype": "Heading",
+   "label": "Total Input Tax"
+  },
+  {
+   "fieldname": "section_break_mbkg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_uvke",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_input_tax",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_zmzb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_vat_payablerefundable",
+   "fieldtype": "Heading",
+   "label": "Total VAT Payable/Refundable"
+  },
+  {
+   "fieldname": "section_break_klbg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kdtx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fjnu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_vat_payable_refundable",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lqwh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hjfj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_blho",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hbav",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_oykh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bggd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "date_from",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date from",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tqyp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_to",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date to",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tab_transactions",
+   "fieldtype": "Tab Break",
+   "label": "Transactions"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "gl_entries",
+   "fieldtype": "Table",
+   "label": "Transactions",
+   "options": "Value-added Tax Return GL Entry"
+  },
+  {
+   "fieldname": "html_pehe",
+   "fieldtype": "HTML",
+   "options": "(1\ufe0f\u20e34\ufe0f\u20e3 + 1\ufe0f\u20e34\ufe0f\u20e3<sup>a</sup> + 1\ufe0f\u20e35\ufe0f\u20e3 + 1\ufe0f\u20e35\ufe0f\u20e3<sup>a</sup> + 1\ufe0f\u20e36\ufe0f\u20e3 + 1\ufe0f\u20e37\ufe0f\u20e3 + 1\ufe0f\u20e38\ufe0f\u20e3)"
+  },
+  {
+   "fieldname": "html_szis",
+   "fieldtype": "HTML",
+   "options": "(Total Output - Total Input)"
+  },
+  {
+   "fieldname": "button_report_output_a",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_output_b",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_output_c",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_output_d",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_output_e",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_input_a",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_input_b",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_input_c",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  },
+  {
+   "fieldname": "button_report_input_d",
+   "fieldtype": "Button",
+   "label": "\ud83d\udd0d"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-04-24 14:47:38.960644",
+ "modified_by": "Administrator",
+ "module": "Tax Compliance",
+ "name": "Value-added Tax Return",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

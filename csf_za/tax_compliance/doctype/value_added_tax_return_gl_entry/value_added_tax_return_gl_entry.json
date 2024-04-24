@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-04-21 11:12:31.004418",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gl_entry",
+  "voucher_type",
+  "voucher_no",
+  "posting_date",
+  "taxes_and_charges",
+  "tax_account_debit",
+  "tax_account_credit",
+  "tax_amount",
+  "incl_tax_amount",
+  "classification",
+  "classification_debugging_section",
+  "classification_debugging"
+ ],
+ "fields": [
+  {
+   "fetch_from": "gl_entry.voucher_type",
+   "fieldname": "voucher_type",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Voucher Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "gl_entry.voucher_no",
+   "fieldname": "voucher_no",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Voucher No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gl_entry",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "GL Entry",
+   "options": "GL Entry"
+  },
+  {
+   "fetch_from": "gl_entry.posting_date",
+   "fieldname": "posting_date",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Data",
+   "label": "Taxes and Charges Template",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "gl_entry.debit_in_account_currency",
+   "fieldname": "tax_account_debit",
+   "fieldtype": "Currency",
+   "in_standard_filter": 1,
+   "label": "Tax Account Debit",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "gl_entry.credit_in_account_currency",
+   "fieldname": "tax_account_credit",
+   "fieldtype": "Currency",
+   "in_standard_filter": 1,
+   "label": "Tax Account Credit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "classification",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Classification",
+   "options": "\nOutput - A Standard rate (excl capital goods)\nOutput - B Standard rate (only capital goods)\nOutput - C Zero Rated (excl goods exported)\nOutput - D Zero Rated (only goods exported)\nOutput - E Exempt\nInput - A Capital goods and/or services supplied to you (local)\nInput - B Capital goods imported\nInput - C Other goods supplied to you (excl capital goods)\nInput - D Other goods imported (excl capital goods)\nSARS Payment/Receipt"
+  },
+  {
+   "fieldname": "classification_debugging",
+   "fieldtype": "Code",
+   "label": "Log messages",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "classification_debugging_section",
+   "fieldtype": "Section Break",
+   "label": "Automatic Classification Log"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax Amount",
+   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\"",
+   "read_only": 1
+  },
+  {
+   "fieldname": "incl_tax_amount",
+   "fieldtype": "Currency",
+   "label": "Incl Tax Amount",
+   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\"",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-04-24 14:53:12.543419",
+ "modified_by": "Administrator",
+ "module": "Tax Compliance",
+ "name": "Value-added Tax Return GL Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

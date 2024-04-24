@@ -227,3 +227,20 @@ before_tests = "csf_za.utils.before_tests"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+
+fixtures = [
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"name",
+				"in",
+				(
+					"Account-custom_section_valueadded_tax_return_settings",
+					"Account-custom_vat_return_debit_classification",
+					"Account-custom_vat_return_credit_classification",
+				),
+			]
+		],
+	}
+]
