@@ -11,6 +11,15 @@ This is a Frappe app, intended to be used with ERPNext (version 15).
 
 MIT
 
+### Features
+
+1. Value-added Tax Return: This makes submitting your VAT201 returns to SARS much easier
+
+### User documentation
+
+User documentation is hosted at [csf-za-docs.finfoot.tech](csf-za-docs.finfoot.tech)
+
+### Development
 
 #### Tests
 
@@ -35,7 +44,7 @@ sudo apt-get install chromium
 bench --site test_site run-ui-tests csf_za --headless --browser chromium
 ```
 
-#### Development
+#### Contributing
 
 We use [pre-commit](https://pre-commit.com/) for linting. First time setup may be required:
 ```shell
@@ -59,4 +68,13 @@ git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-r
 
 # Run semgrep specifying rules folder as config 
 semgrep --config=/workspace/development/frappe-semgrep-rules/rules apps/csf_za
+```
+
+
+The documentation has been generated using [mdBook](https://rust-lang.github.io/mdBook/guide/creating.html)
+
+Make sure you have [mdbook](https://rust-lang.github.io/mdBook/guide/installation.html) installed/downloaded. To modify and test locally:
+```shell
+cd docs
+mdbook serve --open
 ```
