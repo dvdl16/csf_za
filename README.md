@@ -1,7 +1,7 @@
 ## South Africa Customisations
 
 [ci workflow badge here]
-[codecov workflow badge here]
+[![codecov](https://codecov.io/gh/dvdl16/csf_za/graph/badge.svg?token=UTL6D9J5J8)](https://codecov.io/gh/dvdl16/csf_za)
 
 Country Specific Functionality for South Africa
 
