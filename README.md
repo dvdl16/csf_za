@@ -17,7 +17,7 @@ MIT
 
 ### User documentation
 
-User documentation is hosted at [csf-za-docs.finfoot.tech](csf-za-docs.finfoot.tech)
+User documentation is hosted at [csf-za-docs.finfoot.tech](https://csf-za-docs.finfoot.tech)
 
 ### Development
 
