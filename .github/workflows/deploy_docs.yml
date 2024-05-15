@@ -6,6 +6,7 @@ on:
 
 jobs:
   deploy:
+    name: Build Docs and Deploy to GitHub Pages
     runs-on: ubuntu-latest
     permissions:
       contents: write  # To push a branch 
@@ -32,7 +33,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: 'book'
+          path: 'docs/book'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
