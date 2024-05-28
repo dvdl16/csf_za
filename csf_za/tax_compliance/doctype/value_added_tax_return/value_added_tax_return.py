@@ -318,7 +318,7 @@ class ValueaddedTaxReturn(Document):
 				filtered_out = []
 				for journal_entry in item.linked_journal_entries:
 					if journal_entry not in filtered_out:
-						if journal_entry.journal_entry_account_debit > 0:
+						if journal_entry.journal_entry_account_debit != 0:
 							debit_amount = journal_entry.journal_entry_account_debit
 							contra_entry_with_same_amount = next(
 								(
@@ -328,7 +328,7 @@ class ValueaddedTaxReturn(Document):
 								),
 								None,
 							)
-						elif journal_entry.journal_entry_account_credit > 0:
+						elif journal_entry.journal_entry_account_credit != 0:
 							credit_amount = journal_entry.journal_entry_account_credit
 							contra_entry_with_same_amount = next(
 								(
@@ -378,7 +378,7 @@ class ValueaddedTaxReturn(Document):
 					voucher.classification_debugging += f"\n🚀 incl_tax_leg = '{incl_tax_leg.journal_entry_account}': '{incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit}'"
 					voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_credit or excl_tax_leg.journal_entry_account_debit}'"
 
-					if excl_tax_leg.journal_entry_account_debit > 0:
+					if excl_tax_leg.journal_entry_account_debit != 0:
 						voucher.classification = frappe.get_cached_value(
 							"Account", excl_tax_leg.journal_entry_account, "custom_vat_return_debit_classification"
 						)
@@ -387,7 +387,7 @@ class ValueaddedTaxReturn(Document):
 						)
 						voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
-					elif excl_tax_leg.journal_entry_account_credit > 0:
+					elif excl_tax_leg.journal_entry_account_credit != 0:
 						voucher.classification = frappe.get_cached_value(
 							"Account", excl_tax_leg.journal_entry_account, "custom_vat_return_credit_classification"
 						)
