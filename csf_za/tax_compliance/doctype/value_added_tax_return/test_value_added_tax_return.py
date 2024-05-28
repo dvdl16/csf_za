@@ -195,3 +195,77 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 			results[1].classification, None
 		)  # Assuming no classification for missing template
 		self.assertEqual(results[2].classification, "Classified")  # Assuming custom classification logic
+
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.VAT_RETURN_SETTING_FIELD_MAP",
+		[
+			{
+				"field_name": "vat_field",
+				"classification": "Standard VAT",
+				"reference_doctype": "Sales Invoice",
+			}
+		],
+	)
+	def test_process_gl_entries_with_negatives_in_gl_entry(
+		self, mock_cached_value, mock_transform, mock_get_cached_doc
+	):
+		mock_settings = frappe._dict(
+			{"tax_accounts": [frappe._dict({"account": "VAT Account"})], "vat_field": "VAT Template"}
+		)
+		mock_vouchers = frappe._dict(
+			{
+				"JE-001": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Journal Entry",
+								"general_ledger_debit": -15,
+								"general_ledger_credit": 0,
+							}
+						),
+						"linked_journal_entries": [
+							frappe._dict(
+								{
+									"journal_entry_account": "VAT Account",
+									"journal_entry_account_debit": -15,
+									"journal_entry_account_credit": 0,
+								}
+							),
+							frappe._dict(
+								{
+									"journal_entry_account": "Other Account",
+									"journal_entry_account_debit": -100,
+									"journal_entry_account_credit": 0,
+								}
+							),
+							frappe._dict(
+								{
+									"journal_entry_account": "Bank Account",
+									"journal_entry_account_debit": 0,
+									"journal_entry_account_credit": -115,
+								}
+							),
+						],
+					}
+				),
+			}
+		)
+
+		mock_get_cached_doc.return_value = mock_settings
+		mock_transform.return_value = mock_vouchers
+		mock_cached_value.side_effect = lambda doctype, docname, fieldname: "Classified"
+
+		vat_return = frappe.new_doc("Value-added Tax Return")
+		results = vat_return.process_gl_entries([])  # input for your GL entries
+
+		self.assertEqual(len(results), 1)
+		self.assertEqual(results[0].classification, "Classified")  # Assuming custom classification logic
