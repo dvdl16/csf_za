@@ -30,8 +30,6 @@ def get_columns(filters):
 		{
 			"fieldname": "voucher_type",
 			"label": _("Voucher Type"),
-			"fieldtype": "Link",
-			"options": "Doctype",
 			"width": 150,
 		},
 		{
