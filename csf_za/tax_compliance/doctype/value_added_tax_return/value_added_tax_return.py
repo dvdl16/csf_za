@@ -397,6 +397,12 @@ class ValueaddedTaxReturn(Document):
 						voucher.classification_debugging += f"\n🚀 'Classify Credit entries..' for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
 
+			# Set tax_amount to have same sign as incl_tax_amount
+			if voucher.tax_amount and voucher.incl_tax_amount:
+				voucher.tax_amount = (
+					voucher.tax_amount * -1 if voucher.incl_tax_amount < 0 else voucher.tax_amount
+				)
+
 		return [voucher.voucher for voucher in vouchers.values()]
 
 
