@@ -268,6 +268,7 @@ class ValueaddedTaxReturn(Document):
 				voucher.incl_tax_amount = (
 					voucher.sales_invoice_taxes_total or voucher.purchase_invoice_taxes_total
 				)
+				voucher = set_sign_of_tax_amount(voucher)
 				voucher.classification_debugging += (
 					"\n🚀 voucher_type is a 'Sales Invoice' or 'Purchase Invoice')"
 				)
@@ -385,6 +386,7 @@ class ValueaddedTaxReturn(Document):
 						voucher.incl_tax_amount = (
 							incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit
 						)
+						voucher = set_sign_of_tax_amount(voucher)
 						voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
 					elif excl_tax_leg.journal_entry_account_credit != 0:
@@ -394,14 +396,9 @@ class ValueaddedTaxReturn(Document):
 						voucher.incl_tax_amount = (
 							incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit
 						)
+						voucher = set_sign_of_tax_amount(voucher)
 						voucher.classification_debugging += f"\n🚀 'Classify Credit entries..' for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
-
-			# Set tax_amount to have same sign as incl_tax_amount
-			if voucher.tax_amount and voucher.incl_tax_amount:
-				voucher.tax_amount = (
-					voucher.tax_amount * -1 if voucher.incl_tax_amount < 0 else voucher.tax_amount
-				)
 
 		return [voucher.voucher for voucher in vouchers.values()]
 
@@ -458,3 +455,15 @@ def transform_gl_entries(gl_entries):
 		].append(entry)
 
 	return vouchers
+
+
+def set_sign_of_tax_amount(voucher):
+	"""
+	Set tax_amount to have same sign as incl_tax_amount
+	"""
+	if voucher.tax_amount and voucher.incl_tax_amount:
+		if voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
+			voucher.tax_amount = (
+				voucher.tax_amount * -1 if voucher.incl_tax_amount < 0 else voucher.tax_amount
+			)
+	return voucher
