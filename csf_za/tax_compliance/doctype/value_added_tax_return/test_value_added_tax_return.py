@@ -6,6 +6,10 @@ from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return import (
+	set_sign_of_tax_amount,
+)
+
 
 class TestValueaddedTaxReturn(FrappeTestCase):
 	@classmethod
@@ -269,3 +273,24 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 
 		self.assertEqual(len(results), 1)
 		self.assertEqual(results[0].classification, "Classified")  # Assuming custom classification logic
+
+
+class TestSetSignOfTaxAmount(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()  # important to call super() methods when extending TestCase.
+
+	def test_positive_incl_tax_amount(self):
+		voucher = frappe._dict(tax_amount=100, incl_tax_amount=200)
+		updated_voucher = set_sign_of_tax_amount(voucher)
+		self.assertEqual(updated_voucher.tax_amount, 100)
+
+	def test_negative_incl_tax_amount(self):
+		voucher = frappe._dict(tax_amount=100, incl_tax_amount=-200)
+		updated_voucher = set_sign_of_tax_amount(voucher)
+		self.assertEqual(updated_voucher.tax_amount, -100)
+
+	def test_negative_tax_amount_with_negative_incl_tax_amount(self):
+		voucher = frappe._dict(tax_amount=-100, incl_tax_amount=-200)
+		updated_voucher = set_sign_of_tax_amount(voucher)
+		self.assertEqual(updated_voucher.tax_amount, -100)
