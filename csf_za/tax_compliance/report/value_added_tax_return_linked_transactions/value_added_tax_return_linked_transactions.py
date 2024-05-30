@@ -30,8 +30,6 @@ def get_columns(filters):
 		{
 			"fieldname": "voucher_type",
 			"label": _("Voucher Type"),
-			"fieldtype": "Link",
-			"options": "Doctype",
 			"width": 150,
 		},
 		{
@@ -141,6 +139,17 @@ def group_by_classification(data):
 		output_data.append({"name": classification if classification else "Unclassified"})
 		sorted_chunk = sorted(grouped_data[classification], key=lambda x: (x.posting_date, x.voucher_no))
 		output_data += sorted_chunk
+
+		# Add subtotal row per classification
+		output_data.append(
+			{
+				"name": "Total",
+				"tax_account_debit": sum([row["tax_account_debit"] for row in sorted_chunk]),
+				"tax_account_credit": sum([row["tax_account_credit"] for row in sorted_chunk]),
+				"tax_amount": sum([row["tax_amount"] for row in sorted_chunk]),
+				"incl_tax_amount": sum([row["incl_tax_amount"] for row in sorted_chunk]),
+			}
+		)
 		output_data.append({})
 
 	return output_data
