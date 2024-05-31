@@ -166,7 +166,9 @@ class ValueaddedTaxReturn(Document):
 		"""
 		Validate when document is submitted
 		"""
-		unclassified = [row for row in self.gl_entries if not row.classification]
+		unclassified = [
+			row for row in self.gl_entries if not row.classification and not row.is_cancelled
+		]
 		if len(unclassified) > 0:
 			frappe.throw(
 				_("Please classify the {0} remaining unclassified transactions before submitting").format(
@@ -211,6 +213,7 @@ class ValueaddedTaxReturn(Document):
 				gle.voucher_type,
 				gle.voucher_no,
 				gle.posting_date,
+				gle.is_cancelled,
 				gle.debit_in_account_currency.as_("general_ledger_debit"),
 				gle.credit_in_account_currency.as_("general_ledger_credit"),
 				je.total_debit.as_("journal_entry_total_debit"),
@@ -262,13 +265,23 @@ class ValueaddedTaxReturn(Document):
 
 		for voucher_no, item in vouchers.items():
 			voucher = item.voucher
+
+			# Skip Cancelled GL Entries
+			if voucher.is_cancelled:
+				continue
+
 			voucher.tax_amount = voucher.general_ledger_debit or voucher.general_ledger_credit
+
 			voucher.classification_debugging = "🚀"
 			if voucher.voucher_type in ("Sales Invoice", "Purchase Invoice"):
 				voucher.incl_tax_amount = (
 					voucher.sales_invoice_taxes_total or voucher.purchase_invoice_taxes_total
 				)
-				voucher = set_sign_of_tax_amount(voucher)
+
+				# If the voucher_type is a reversal (e.g. Credit and Debit Notes, change the sign of tax_amount)
+				if voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
+					voucher.tax_amount = voucher.tax_amount * -1
+
 				voucher.classification_debugging += (
 					"\n🚀 voucher_type is a 'Sales Invoice' or 'Purchase Invoice')"
 				)
@@ -365,11 +378,11 @@ class ValueaddedTaxReturn(Document):
 				try:
 					incl_tax_leg = max(
 						[je for je in filtered_journal_entries if je != tax_leg],
-						key=lambda je: je.journal_entry_account_credit or je.journal_entry_account_debit,
+						key=lambda je: abs(je.journal_entry_account_credit or je.journal_entry_account_debit),
 					)
 					excl_tax_leg = min(
 						[je for je in filtered_journal_entries if je != tax_leg],
-						key=lambda je: je.journal_entry_account_credit or je.journal_entry_account_debit,
+						key=lambda je: abs(je.journal_entry_account_credit or je.journal_entry_account_debit),
 					)
 				except ValueError as e:
 					voucher.classification_debugging += f"\n🚀 {e}]'"
@@ -386,7 +399,6 @@ class ValueaddedTaxReturn(Document):
 						voucher.incl_tax_amount = (
 							incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit
 						)
-						voucher = set_sign_of_tax_amount(voucher)
 						voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
 					elif excl_tax_leg.journal_entry_account_credit != 0:
@@ -396,7 +408,6 @@ class ValueaddedTaxReturn(Document):
 						voucher.incl_tax_amount = (
 							incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit
 						)
-						voucher = set_sign_of_tax_amount(voucher)
 						voucher.classification_debugging += f"\n🚀 'Classify Credit entries..' for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
 						continue
 
@@ -455,15 +466,3 @@ def transform_gl_entries(gl_entries):
 		].append(entry)
 
 	return vouchers
-
-
-def set_sign_of_tax_amount(voucher):
-	"""
-	Set tax_amount to have same sign as incl_tax_amount
-	"""
-	if voucher.tax_amount and voucher.incl_tax_amount:
-		if voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
-			voucher.tax_amount = (
-				voucher.tax_amount * -1 if voucher.incl_tax_amount < 0 else voucher.tax_amount
-			)
-	return voucher

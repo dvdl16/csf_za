@@ -6,10 +6,6 @@ from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return import (
-	set_sign_of_tax_amount,
-)
-
 
 class TestValueaddedTaxReturn(FrappeTestCase):
 	@classmethod
@@ -118,6 +114,16 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		],
 	)
 	def test_process_gl_entries(self, mock_cached_value, mock_transform, mock_get_cached_doc):
+		"""
+		Test process_gl_entries function with:
+		        - SI-001: Sales Invoice
+		        - PI-001: Purchase Invoice with no VAT Template
+		        - SI-002: Credit Note
+		        - PI-002: Debit Note
+		        - JE-001: Journal Entry
+		        - JE-002: Journal Entry with negatives
+		        - JE-003: Cancelled Journal Entry
+		"""
 		mock_settings = frappe._dict(
 			{"tax_accounts": [frappe._dict({"account": "VAT Account"})], "vat_field": "VAT Template"}
 		)
@@ -128,9 +134,9 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Sales Invoice",
-								"general_ledger_debit": 100,
-								"general_ledger_credit": 0,
-								"sales_invoice_taxes_total": 10,
+								"general_ledger_debit": 0,
+								"general_ledger_credit": 15,
+								"sales_invoice_taxes_total": 115,
 								"taxes_and_charges_template": "VAT Template",
 							}
 						)
@@ -141,10 +147,36 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Purchase Invoice",
-								"general_ledger_debit": 0,
-								"general_ledger_credit": 200,
-								"purchase_invoice_taxes_total": 20,
+								"general_ledger_debit": 15,
+								"general_ledger_credit": 0,
+								"purchase_invoice_taxes_total": 115,
 								"taxes_and_charges_template": None,
+							}
+						)
+					}
+				),
+				"SI-002": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Sales Invoice",
+								"general_ledger_debit": 0,
+								"general_ledger_credit": 15,
+								"sales_invoice_taxes_total": -115,
+								"taxes_and_charges_template": "VAT Template",
+							}
+						)
+					}
+				),
+				"PI-002": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Purchase Invoice",
+								"general_ledger_debit": 15,
+								"general_ledger_credit": 0,
+								"purchase_invoice_taxes_total": -115,
+								"taxes_and_charges_template": "VAT Template",
 							}
 						)
 					}
@@ -183,51 +215,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						],
 					}
 				),
-			}
-		)
-
-		mock_get_cached_doc.return_value = mock_settings
-		mock_transform.return_value = mock_vouchers
-		mock_cached_value.side_effect = lambda doctype, docname, fieldname: "Classified"
-
-		vat_return = frappe.new_doc("Value-added Tax Return")
-		results = vat_return.process_gl_entries([])  # input for your GL entries
-
-		self.assertEqual(len(results), 3)
-		self.assertEqual(results[0].classification, "Standard VAT")
-		self.assertEqual(
-			results[1].classification, None
-		)  # Assuming no classification for missing template
-		self.assertEqual(results[2].classification, "Classified")  # Assuming custom classification logic
-
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
-	)
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries"
-	)
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
-	)
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.VAT_RETURN_SETTING_FIELD_MAP",
-		[
-			{
-				"field_name": "vat_field",
-				"classification": "Standard VAT",
-				"reference_doctype": "Sales Invoice",
-			}
-		],
-	)
-	def test_process_gl_entries_with_negatives_in_gl_entry(
-		self, mock_cached_value, mock_transform, mock_get_cached_doc
-	):
-		mock_settings = frappe._dict(
-			{"tax_accounts": [frappe._dict({"account": "VAT Account"})], "vat_field": "VAT Template"}
-		)
-		mock_vouchers = frappe._dict(
-			{
-				"JE-001": frappe._dict(
+				"JE-002": frappe._dict(
 					{
 						"voucher": frappe._dict(
 							{
@@ -261,6 +249,19 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						],
 					}
 				),
+				"JE-003": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Journal Entry",
+								"general_ledger_debit": -15,
+								"general_ledger_credit": 0,
+								"is_cancelled": 1,
+							}
+						),
+						"linked_journal_entries": [],
+					}
+				),
 			}
 		)
 
@@ -271,26 +272,42 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		vat_return = frappe.new_doc("Value-added Tax Return")
 		results = vat_return.process_gl_entries([])  # input for your GL entries
 
-		self.assertEqual(len(results), 1)
-		self.assertEqual(results[0].classification, "Classified")  # Assuming custom classification logic
+		self.assertEqual(len(results), 7)
 
+		# Validate different voucher types
+		# SI-001: Sales Invoice
+		self.assertEqual(results[0].classification, "Standard VAT")
+		self.assertEqual(results[0].tax_amount, 15)
+		self.assertEqual(results[0].incl_tax_amount, 115)
 
-class TestSetSignOfTaxAmount(FrappeTestCase):
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()  # important to call super() methods when extending TestCase.
+		# PI-001: Purchase Invoice with no VAT Template
+		self.assertEqual(
+			results[1].classification, None
+		)  # Assuming no classification for missing template
+		self.assertEqual(results[1].tax_amount, 15)
+		self.assertEqual(results[1].incl_tax_amount, 115)
 
-	def test_positive_incl_tax_amount(self):
-		voucher = frappe._dict(tax_amount=100, incl_tax_amount=200)
-		updated_voucher = set_sign_of_tax_amount(voucher)
-		self.assertEqual(updated_voucher.tax_amount, 100)
+		# SI-002: Credit Note
+		self.assertEqual(results[0].classification, "Standard VAT")
+		self.assertEqual(results[2].tax_amount, -15)
+		self.assertEqual(results[2].incl_tax_amount, -115)
 
-	def test_negative_incl_tax_amount(self):
-		voucher = frappe._dict(tax_amount=100, incl_tax_amount=-200)
-		updated_voucher = set_sign_of_tax_amount(voucher)
-		self.assertEqual(updated_voucher.tax_amount, -100)
+		# PI-002: Debit Note
+		self.assertEqual(results[0].classification, "Standard VAT")
+		self.assertEqual(results[3].tax_amount, -15)
+		self.assertEqual(results[3].incl_tax_amount, -115)
 
-	def test_negative_tax_amount_with_negative_incl_tax_amount(self):
-		voucher = frappe._dict(tax_amount=-100, incl_tax_amount=-200)
-		updated_voucher = set_sign_of_tax_amount(voucher)
-		self.assertEqual(updated_voucher.tax_amount, -100)
+		# JE-001: Journal Entry
+		self.assertEqual(results[4].classification, "Classified")  # Assuming custom classification logic
+		self.assertEqual(results[4].tax_amount, 15)
+		self.assertEqual(results[4].incl_tax_amount, 115)
+
+		# JE-002: Journal Entry with negatives
+		self.assertEqual(results[5].classification, "Classified")  # Assuming custom classification logic
+		self.assertEqual(results[5].tax_amount, -15)
+		self.assertEqual(results[5].incl_tax_amount, -115)
+
+		# JE-003: Cancelled Journal Entry
+		self.assertIsNone(results[6].classification)
+		self.assertIsNone(results[6].tax_amount)
+		self.assertIsNone(results[6].incl_tax_amount)
