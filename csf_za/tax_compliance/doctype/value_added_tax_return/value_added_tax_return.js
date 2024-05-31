@@ -33,6 +33,7 @@ frappe.ui.form.on("Value-added Tax Return", {
 									row.classification_debugging = entry.classification_debugging
 									row.tax_amount = entry.tax_amount
 									row.incl_tax_amount = entry.incl_tax_amount
+									row.is_cancelled = entry.is_cancelled
 								});
 								frm.refresh_field("gl_entries");
 								frm.get_field("gl_entries").tab.set_active();
@@ -48,7 +49,7 @@ frappe.ui.form.on("Value-added Tax Return", {
 	},
 	set_intro(frm) {
 		// Set the intro message on the form to show unclassified transactions
-		const unclassified = frm.doc.gl_entries.filter((entry) => entry.classification.length === 0);
+		const unclassified = frm.doc.gl_entries.filter((entry) => entry.classification.length === 0 && entry.is_cancelled === 0);
 		if (unclassified.length > 0) {
 			frm.set_intro(`<b>${unclassified.length}</b> ` + __("unclassified transactions"), 'orange');
 		}

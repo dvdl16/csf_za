@@ -24,5 +24,11 @@ frappe.query_reports["Value-added Tax Return Linked Transactions"] = {
 				frappe.query_report.set_filter_value('classification', "");
 			}
 		},
+		{
+			"fieldname": "include_cancelled",
+			"label": __("Include Cancelled Vouchers"),
+			"default": 0,
+			"fieldtype": "Check"
+		},
 	],
 };

@@ -75,6 +75,12 @@ def get_columns(filters):
 			"fieldtype": "Currency",
 			"width": 100,
 		},
+		{
+			"fieldname": "is_cancelled",
+			"label": _("Is Cancelled"),
+			"fieldtype": "Check",
+			"width": 50,
+		},
 	]
 	return columns
 
@@ -83,6 +89,7 @@ def get_data(filters):
 	vat_return = filters.get("vat_return")
 	classification = filters.get("classification")
 	show_all_classifications = filters.get("show_all_classifications")
+	include_cancelled = filters.get("include_cancelled")
 
 	vtr = frappe.qb.DocType("Value-added Tax Return")
 	vtre = frappe.qb.DocType("Value-added Tax Return GL Entry")
@@ -90,6 +97,8 @@ def get_data(filters):
 	extra_criterions = []
 	if classification:
 		extra_criterions.append(vtre.classification == classification)
+	if not include_cancelled:
+		extra_criterions.append(vtre.is_cancelled == 0)
 
 	# Construct the query using Frappe query builder
 	query = (
@@ -108,9 +117,10 @@ def get_data(filters):
 			vtre.tax_amount,
 			vtre.incl_tax_amount,
 			vtre.classification,
+			vtre.is_cancelled,
 		)
 		.where(vtr.name == vat_return)
-		.where(Criterion.any(extra_criterions))
+		.where(Criterion.all(extra_criterions))
 	)
 
 	# Execute the query and fetch the result as a list of dictionaries

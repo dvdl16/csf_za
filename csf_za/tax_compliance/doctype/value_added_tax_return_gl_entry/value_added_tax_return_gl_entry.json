@@ -17,6 +17,7 @@
   "tax_amount",
   "incl_tax_amount",
   "classification",
+  "is_cancelled",
   "classification_debugging_section",
   "classification_debugging"
  ],
@@ -78,7 +79,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Classification",
-   "options": "\nOutput - A Standard rate (excl capital goods)\nOutput - B Standard rate (only capital goods)\nOutput - C Zero Rated (excl goods exported)\nOutput - D Zero Rated (only goods exported)\nOutput - E Exempt\nInput - A Capital goods and/or services supplied to you (local)\nInput - B Capital goods imported\nInput - C Other goods supplied to you (excl capital goods)\nInput - D Other goods imported (excl capital goods)\nSARS Payment/Receipt"
+   "options": "\nOutput - A Standard rate (excl capital goods)\nOutput - B Standard rate (only capital goods)\nOutput - C Zero Rated (excl goods exported)\nOutput - D Zero Rated (only goods exported)\nOutput - E Exempt\nInput - A Capital goods and/or services supplied to you (local)\nInput - B Capital goods imported\nInput - C Other goods supplied to you (excl capital goods)\nInput - D Other goods imported (excl capital goods)\nSARS Payment/Receipt",
+   "read_only_depends_on": "eval: doc.is_cancelled"
   },
   {
    "fieldname": "classification_debugging",
@@ -96,21 +98,28 @@
    "fieldname": "tax_amount",
    "fieldtype": "Currency",
    "label": "Tax Amount",
-   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\"",
+   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\" && !doc.is_cancelled",
    "read_only": 1
   },
   {
    "fieldname": "incl_tax_amount",
    "fieldtype": "Currency",
    "label": "Incl Tax Amount",
-   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\"",
+   "mandatory_depends_on": "eval: doc.classification != \"SARS Payment/Receipt\" && !doc.is_cancelled",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_cancelled",
+   "fieldtype": "Check",
+   "label": "Is Cancelled",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-24 14:53:12.543419",
+ "modified": "2024-05-31 09:45:59.849502",
  "modified_by": "Administrator",
  "module": "Tax Compliance",
  "name": "Value-added Tax Return GL Entry",
