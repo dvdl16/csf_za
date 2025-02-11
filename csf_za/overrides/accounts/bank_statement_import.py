@@ -68,64 +68,50 @@ class CustomBankStatementImport(BankStatementImport):
 		file_content = file_doc.get_content()
 		data = read_csv_content(file_content)
 
-		expected_headers = [
-			"Date",
-			"SERVICE FEE",
-			"Amount",
-			"DESCRIPTION",
-			"REFERENCE",
-			"Balance",
-			"CHEQUE NUMBER",
-			None,
-		]
-		if data[2][:6] != expected_headers[:6]:
-			frappe.throw(
-				f"Unexpected headers found in .csv file. Expected: {', '.join(expected_headers[:6])} in third row"
-			)
+		# Find the header row dynamically
+        	header_row_index = None
+        	for i, row in enumerate(data):
+            		if "Date" in row and "Amount" in row and "Description" in row:
+                	header_row_index = i
+                break
+        
+        	if header_row_index is None:
+            		frappe.throw("Could not find a valid header row in the CSV file.")
 
 		new_data = [["Date", "Description", "Reference Number", "Deposit", "Withdrawal", "Bank Account"]]
-		for row_num, row in enumerate(data[3:], start=1):
-			amount_value = None
-			try:
-				amount_value = float(row[2])
-			except ValueError:
-				frappe.throw(f"Invalid Amount value found in row {row_num}")
-
-			deposit, withdrawal = (0, 0)
-			bank_account = self.bank_account
-			date = None
-			if amount_value < 0:
-				withdrawal = amount_value * -1
-			else:
-				deposit = amount_value
-
-			# Parse date format as YYYY-MM-DD
-			try:
-				date = datetime.strptime(row[0], "%Y-%m-%d")
-			except ValueError:
-				try:
-					date = datetime.strptime(row[0], "%Y/%m/%d")
-				except ValueError:
-					frappe.throw(f"Invalid date value found in row {row_num}")
-
-			new_row = [date.strftime("%Y-%m-%d"), row[3], row[4], deposit, withdrawal, bank_account]
-			new_data.append(new_row)
-
-		file_data = to_csv(new_data)
-		file_name, extension = file_doc.get_extension()
-		_file = frappe.get_doc(
-			{
-				"doctype": "File",
-				"file_name": file_name + "_modified.csv",
-				"attached_to_doctype": "Bank Statement Import",
-				"attached_to_name": self.name,
-				"folder": "Home",
-				"content": file_data,
-				"is_private": 1,
-			}
-		)
-		_file.save()
-		self.import_file = _file.file_url
+        
+        	for row in data[header_row_index + 1:]:
+            		try:
+                	amount_value = float(row[2])
+            	except ValueError:
+                	frappe.throw("Invalid Amount value found in row {}".format(row))
+            
+            	deposit = amount_value if amount_value > 0 else 0
+            	withdrawal = -amount_value if amount_value < 0 else 0
+            
+            	try:
+                	date = datetime.strptime(row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
+            	except ValueError:
+                	frappe.throw("Invalid date format in row {}".format(row))
+            
+            new_row = [date, row[3], row[4], deposit, withdrawal, self.bank_account]
+            new_data.append(new_row)
+        
+        file_data = to_csv(new_data)
+        file_name, _ = file_doc.get_extension()
+        _file = frappe.get_doc(
+            {
+                "doctype": "File",
+                "file_name": file_name + "_modified.csv",
+                "attached_to_doctype": "Bank Statement Import",
+                "attached_to_name": self.name,
+                "folder": "Home",
+                "content": file_data,
+                "is_private": 1,
+            }
+        )
+        _file.save()
+        self.import_file = _file.file_url
 
 	def split_amount_column_in_csv_file_bankzero(self, file_doc):
 		"""
