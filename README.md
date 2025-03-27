@@ -14,6 +14,9 @@ MIT
 ### Features
 
 1. Value-added Tax Return: This makes submitting your VAT201 returns to SARS much easier
+2. Support for Bank Statements from South African Banks: Native import of .csv formats from FNB, ABSA and Bank Zero
+3. Easy-add of VAT in Bank Reconciliation Tool: No need to Edit in Full Page for those Journal Entries that require a VAT leg
+
 
 ### User documentation
 
