@@ -49,3 +49,14 @@ These are the established `.csv` formats
 | 5   |                            |            |                   |                                |        |      |         |
 | 6   |                            |            |                   |                                |        |      |         |
 
+### Nedbank
+
+|     | A                     | B               | C    | D     |
+| --- | --------------------- | --------------- | ---- | ----- |
+| 1   | Statement Enquiry :   |                 |      |       |
+| 2   | Account Number :      | 1234567890      |      |       |
+| 3   | Account Description : | CURRENT         |      |       |
+| 4   | Statement Number :    | 123             |      |       |
+| 5   | 01-Jan-25             | BROUGHT FORWARD |      | 10000 |
+| 6   | 01-Jan-25             | Payment         | -500 | 9500  |
+| 7   | 01-Feb-25             | CARRIED FORWARD |      | 9500  |

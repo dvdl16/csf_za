@@ -40,6 +40,7 @@ class CustomBankStatementImport(BankStatementImport):
 					"First National Bank": self.parse_csv_file_fnb,
 					"Bank Zero": self.parse_csv_file_bankzero,
 					"Capitec": self.parse_csv_file_capitec,
+					"Nedbank": self.parse_csv_file_nedbank,
 				}
 				if custom_template in bank_template_map:
 					bank_template_map[custom_template](file_doc)
@@ -207,6 +208,38 @@ class CustomBankStatementImport(BankStatementImport):
 				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[4]))
 			deposit, withdrawal = self._split_amount(amount_value)
 			new_row = [date_str, row[2], row[3], deposit, withdrawal, self.bank_account]
+			new_data.append(new_row)
+
+		file_data = to_csv(new_data)
+		self._save_modified_csv(file_doc, file_data)
+
+	def parse_csv_file_nedbank(self, file_doc):
+		"""
+		Process a CSV file for Nedbank and split the Amount column.
+		"""
+		file_content = file_doc.get_content()
+		data = read_csv_content(file_content)
+
+		if not data:
+			frappe.throw(_("No valid data rows found in the CSV."))
+
+		new_data = [["Date", "Description", "Reference Number", "Deposit", "Withdrawal", "Bank Account"]]
+		for row_num, row in enumerate(data[5:], start=1):
+			if row[1] == "CARRIED FORWARD":
+				break
+			if len(row) < 4:
+				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
+			try:
+				date_obj = datetime.strptime(row[0], "%d-%b-%y")
+				date_str = date_obj.strftime("%Y-%m-%d")
+			except ValueError:
+				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[1]))
+			try:
+				amount_value = float(row[2])
+			except ValueError:
+				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[4]))
+			deposit, withdrawal = self._split_amount(amount_value)
+			new_row = [date_str, row[1], row[1], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
 
 		file_data = to_csv(new_data)
