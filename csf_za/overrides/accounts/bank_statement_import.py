@@ -29,7 +29,10 @@ class CustomBankStatementImport(BankStatementImport):
 		to split the Amount column in the CSV file into separate Deposit and Withdrawal columns.
 		"""
 		if self.import_file and self.import_file[-13:] != "_modified.csv":
-			if self.bank in ["First National Bank", "Bank Zero"]:
+			custom_bank_statement_template = frappe.get_value(
+				"Bank", self.bank, "custom_bank_statement_template"
+			)
+			if custom_bank_statement_template:
 				frappe.msgprint(
 					_("The uploaded file will be modified: the Amount column will be split in two")
 				)
@@ -37,9 +40,9 @@ class CustomBankStatementImport(BankStatementImport):
 				self.remove_null_bytes()
 				file_doc = frappe.get_doc("File", {"file_url": self.import_file})
 				self.validate_import_file_is_csv(file_doc)
-				if self.bank == "First National Bank":
+				if custom_bank_statement_template == "First National Bank":
 					self.split_amount_column_in_csv_file_fnb(file_doc)
-				elif self.bank == "Bank Zero":
+				elif custom_bank_statement_template == "Bank Zero":
 					self.split_amount_column_in_csv_file_bankzero(file_doc)
 				return self.import_file
 

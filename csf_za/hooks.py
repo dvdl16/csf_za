@@ -247,6 +247,8 @@ fixtures = [
 					"Account-custom_vat_return_credit_classification",
 					"Bank Account-custom_bank_reconciliation_section",
 					"Bank Account-custom_bank_reconciliation_default_cost_center",
+					"Bank-custom_local_banking_settings",
+					"Bank-custom_bank_statement_template",
 				),
 			]
 		],
