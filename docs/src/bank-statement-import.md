@@ -72,3 +72,11 @@ These are the established `.csv` formats
 | 5   | HIST | 20250101  |        | 100  | IB TRANSFER FROM         | COMPANY X 55555 | 380 | 0   |
 | 6   | HIST | 20250101  | ##     | -1   | SERVICE FEE              |                 | 52  | 0   |
 | 7   |      | 0         | CLOSE  | 999  | CLOSE BALANCE            |                 | 0   | 0   |
+
+### ABSA
+
+|     | A        | B                  | C      | D       |
+| --- | -------- | ------------------ | ------ | ------- |
+| 1   | Date     | Description        | Amount | Balance |
+| 2   | 20250120 | DIGITAL PAYMENT DT | 100    | 3000    |
+| 3   |          |                    |        |         |
