@@ -28,7 +28,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Bank Reconciliation Tool": "public/js/accounts/bank_reconciliation_tool.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -160,9 +160,10 @@ before_tests = "csf_za.utils.before_tests"
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "csf_za.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.accounts.doctype.bank_statement_import.bank_statement_import.get_preview_from_template": "csf_za.overrides.accounts.bank_statement_import.custom_get_preview_from_template",
+	"erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool.create_journal_entry_bts": "csf_za.overrides.accounts.bank_reconciliation_tool.custom_create_journal_entry_bts",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -237,9 +238,17 @@ fixtures = [
 				"name",
 				"in",
 				(
+					"Account-custom_section_bank_reconciliation_tool_settings",
+					"Account-custom_cost_center_for_tax_account",
 					"Account-custom_section_valueadded_tax_return_settings",
+					"Account-custom_tax_account",
+					"Account-custom_tax_rate_for_bank_recon",
 					"Account-custom_vat_return_debit_classification",
 					"Account-custom_vat_return_credit_classification",
+					"Bank Account-custom_bank_reconciliation_section",
+					"Bank Account-custom_bank_reconciliation_default_cost_center",
+					"Bank-custom_local_banking_settings",
+					"Bank-custom_bank_statement_template",
 				),
 			]
 		],
