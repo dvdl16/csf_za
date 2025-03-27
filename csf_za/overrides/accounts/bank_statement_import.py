@@ -100,7 +100,7 @@ class CustomBankStatementImport(BankStatementImport):
 				return date_obj.strftime("%Y-%m-%d")
 			except ValueError:
 				continue
-		frappe.throw(_("Invalid date format: ") + date_str)
+		frappe.throw(_("Invalid date format: {0}").format(date_str))
 
 	def parse_csv_file_fnb(self, file_doc):
 		"""
