@@ -60,3 +60,15 @@ These are the established `.csv` formats
 | 5   | 01-Jan-25             | BROUGHT FORWARD |      | 10000 |
 | 6   | 01-Jan-25             | Payment         | -500 | 9500  |
 | 7   | 01-Feb-25             | CARRIED FORWARD |      | 9500  |
+
+### Standard Bank
+
+|     | A    | B         | C      | D    |                          |                 |     |     |
+| --- | ---- | --------- | ------ | ---- | ------------------------ | --------------- | --- | --- |
+| 1   | 0    | 123       | BRANCH | 0    |                          | HOGWARTS        | 0   | 0   |
+| 2   |      | 987654321 | ACC-NO | 0    |                          |                 |     |     |
+| 3   |      | 0         | OPEN   | 1000 | OPEN BALANCE             |                 | 0   | 0   |
+| 4   | HIST | 20250101  |        | -100 | AUTOBANK CASH WITHDRAWAL | CHECK GE 465    | 600 | 0   |
+| 5   | HIST | 20250101  |        | 100  | IB TRANSFER FROM         | COMPANY X 55555 | 380 | 0   |
+| 6   | HIST | 20250101  | ##     | -1   | SERVICE FEE              |                 | 52  | 0   |
+| 7   |      | 0         | CLOSE  | 999  | CLOSE BALANCE            |                 | 0   | 0   |
