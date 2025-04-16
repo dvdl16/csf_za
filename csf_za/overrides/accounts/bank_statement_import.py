@@ -226,21 +226,25 @@ class CustomBankStatementImport(BankStatementImport):
 			frappe.throw(_("No valid data rows found in the CSV."))
 
 		new_data = [["Date", "Description", "Reference Number", "Deposit", "Withdrawal", "Bank Account"]]
+		running_balance = 0
 		for row_num, row in enumerate(data[5:], start=1):
-			if row[1] == "CARRIED FORWARD":
-				break
 			if len(row) < 4:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
-			try:
-				date_obj = datetime.strptime(row[0], "%d-%b-%y")
-				date_str = date_obj.strftime("%Y-%m-%d")
-			except ValueError:
-				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[0]))
+			# Skip rows with blank Amounts that do not change the running balance
+			if row[2] == None and row[3] == running_balance:
+				continue
+
+			# Skip unwanted rows
+			if row[1] in ["CARRIED FORWARD", "BROUGHT FORWARD", "PROVISIONAL STATEMENT"]:
+				continue
+
+			date_str = self._parse_date(row[0], formats=["%d%b%Y"])
 			try:
 				amount_value = float(row[2])
-			except ValueError:
+			except (ValueError, TypeError):
 				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[2]))
 			deposit, withdrawal = self._split_amount(amount_value)
+			running_balance = row[3]
 			new_row = [date_str, row[1], row[1], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
 

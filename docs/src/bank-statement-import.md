@@ -51,15 +51,20 @@ These are the established `.csv` formats
 
 ### Nedbank
 
-|     | A                     | B               | C    | D     |
-| --- | --------------------- | --------------- | ---- | ----- |
-| 1   | Statement Enquiry :   |                 |      |       |
-| 2   | Account Number :      | 1234567890      |      |       |
-| 3   | Account Description : | CURRENT         |      |       |
-| 4   | Statement Number :    | 123             |      |       |
-| 5   | 01-Jan-25             | BROUGHT FORWARD |      | 10000 |
-| 6   | 01-Jan-25             | Payment         | -500 | 9500  |
-| 7   | 01-Feb-25             | CARRIED FORWARD |      | 9500  |
+| Statement Enquiry :   |                           |         |          |   |
+|-----------------------|---------------------------|---------|----------|---|
+| Account Number :      | 1234567891                |         |          |   |
+| Account Description : | CURRENT                   |         |          |   |
+| Statement Number :    | 3000                      |         |          |   |
+| 01Mar2025             | ROADCOVER 250301          | -33     | 54676.77 |   |
+| 03Mar2025             | loan                      | -1000   | 53676.77 |   |
+| 27Mar2025             | VAT 25/02-26/03 = R15.22  |         | 11373.78 |   |
+| 27Mar2025             | SERVICE FEE 25/02 - 26/03 | -41.6   | 11332.18 |   |
+| 27Mar2025             | MAINTENANCE FEE           | -75     | 11257.18 |   |
+| 27Mar2025             | CARRIED FORWARD           |         | 11257.18 |   |
+| 27Mar2025             | BROUGHT FORWARD           |         | 11257.18 |   |
+| 27Mar2025             | PROVISIONAL STATEMENT     |         |          |   |
+| 31Mar2025             | CASHFOCUS DIV             | 9106.98 | 20364.16 |   |
 
 ### Standard Bank
 
