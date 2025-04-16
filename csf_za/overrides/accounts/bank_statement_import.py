@@ -199,11 +199,12 @@ class CustomBankStatementImport(BankStatementImport):
 				break
 			if len(row) < 5:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
-			try:
-				date_obj = datetime.strptime(row[1], "%d/%m/%Y")
-				date_str = date_obj.strftime("%Y-%m-%d")
-			except ValueError:
-				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[1]))
+
+			date_str = self._parse_date(row[1], formats=["%d/%m/%Y"])
+
+			# If amount is None, but there is a value in "Fees", we can safely skip
+			if row[4] == None and row[5] != None:
+				continue
 			try:
 				amount_value = float(row[4])
 			except ValueError:
@@ -211,6 +212,23 @@ class CustomBankStatementImport(BankStatementImport):
 			deposit, withdrawal = self._split_amount(amount_value)
 			new_row = [date_str, row[2], row[3], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
+
+			# Create a new row if this row has a fee
+			if row[5] != None:
+				try:
+					fee_value = float(row[5])
+				except ValueError:
+					frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[5]))
+				fee_deposit, fee_withdrawal = self._split_amount(fee_value)
+				new_row = [
+					date_str,
+					f"Fee - {row[2]}",
+					f"Fee - {row[3]}",
+					fee_deposit,
+					fee_withdrawal,
+					self.bank_account,
+				]
+				new_data.append(new_row)
 
 		file_data = to_csv(new_data)
 		self._save_modified_csv(file_doc, file_data)

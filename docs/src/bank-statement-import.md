@@ -40,14 +40,17 @@ These are the established `.csv` formats
 
 ### Capitec
 
-|     | A                          | B          | C                 | D                              | E      | F    | G       |
-| --- | -------------------------- | ---------- | ----------------- | ------------------------------ | ------ | ---- | ------- |
-| 1   | Balance brought   forward: | 12345      |                   |                                |        |      |         |
-| 2   |                            |            |                   |                                |        |      |         |
-| 3   | Account                    | Date       | Description       | Reference                      | Amount | Fees | Balance |
-| 4   | 123456789                  | 01/01/2025 | Inward EFT Credit | CAPITEC   0103PosSettle 250301 | 123    |      | 444444  |
-| 5   |                            |            |                   |                                |        |      |         |
-| 6   |                            |            |                   |                                |        |      |         |
+| Balance brought forward: | 122411.10  |                   |                                                    |          |        |           |   |
+|--------------------------|------------|-------------------|----------------------------------------------------|----------|--------|-----------|---|
+|                          |            |                   |                                                    |          |        |           |   |
+| Account                  | Date       | Description       | Reference                                          | Amount   | Fees   | Balance   |   |
+| 1051185815               | 31/03/2025 | Debit Order       | CAPITEC   D000001212                               | -1528.49 | -3.00  | 61799.77  |   |
+| 1051185815               | 31/03/2025 | Inward EFT Credit | COMPANY X                                          | 19599.08 |        | 81398.85  |   |
+| 1051185815               | 31/03/2025 | Inward EFT Credit | CASHFOCUS COMPANY Y                                | 920.77   |        | 82319.62  |   |
+| 1051185815               | 31/03/2025 | Inward EFT Credit | CI123456                                           | 78037.40 |        | 160357.02 |   |
+| 1051185815               | 31/03/2025 | Month S/Fee       |                                                    |          | -50.00 | 160307.02 |   |
+| 1051185815               | 31/03/2025 | Notify Fee        |                                                    |          | -29.40 | 160277.62 |   |
+| Total:                   |            |                   |                                                    | 38063.92 | -197.4 | 160277.62 |   |
 
 ### Nedbank
 
