@@ -199,11 +199,12 @@ class CustomBankStatementImport(BankStatementImport):
 				break
 			if len(row) < 5:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
-			try:
-				date_obj = datetime.strptime(row[1], "%d/%m/%Y")
-				date_str = date_obj.strftime("%Y-%m-%d")
-			except ValueError:
-				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[1]))
+
+			date_str = self._parse_date(row[1], formats=["%d/%m/%Y"])
+
+			# If amount is None, but there is a value in "Fees", we can safely skip
+			if row[4] == None and row[5] != None:
+				continue
 			try:
 				amount_value = float(row[4])
 			except ValueError:
@@ -211,6 +212,23 @@ class CustomBankStatementImport(BankStatementImport):
 			deposit, withdrawal = self._split_amount(amount_value)
 			new_row = [date_str, row[2], row[3], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
+
+			# Create a new row if this row has a fee
+			if row[5] != None:
+				try:
+					fee_value = float(row[5])
+				except ValueError:
+					frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[5]))
+				fee_deposit, fee_withdrawal = self._split_amount(fee_value)
+				new_row = [
+					date_str,
+					f"Fee - {row[2]}",
+					f"Fee - {row[3]}",
+					fee_deposit,
+					fee_withdrawal,
+					self.bank_account,
+				]
+				new_data.append(new_row)
 
 		file_data = to_csv(new_data)
 		self._save_modified_csv(file_doc, file_data)
@@ -226,21 +244,25 @@ class CustomBankStatementImport(BankStatementImport):
 			frappe.throw(_("No valid data rows found in the CSV."))
 
 		new_data = [["Date", "Description", "Reference Number", "Deposit", "Withdrawal", "Bank Account"]]
+		running_balance = 0
 		for row_num, row in enumerate(data[5:], start=1):
-			if row[1] == "CARRIED FORWARD":
-				break
 			if len(row) < 4:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
-			try:
-				date_obj = datetime.strptime(row[0], "%d-%b-%y")
-				date_str = date_obj.strftime("%Y-%m-%d")
-			except ValueError:
-				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[0]))
+			# Skip rows with blank Amounts that do not change the running balance
+			if row[2] == None and row[3] == running_balance:
+				continue
+
+			# Skip unwanted rows
+			if row[1] in ["CARRIED FORWARD", "BROUGHT FORWARD", "PROVISIONAL STATEMENT"]:
+				continue
+
+			date_str = self._parse_date(row[0], formats=["%d%b%Y"])
 			try:
 				amount_value = float(row[2])
-			except ValueError:
+			except (ValueError, TypeError):
 				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[2]))
 			deposit, withdrawal = self._split_amount(amount_value)
+			running_balance = row[3]
 			new_row = [date_str, row[1], row[1], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
 
@@ -258,22 +280,21 @@ class CustomBankStatementImport(BankStatementImport):
 			frappe.throw(_("No valid data rows found in the CSV."))
 
 		new_data = [["Date", "Description", "Reference Number", "Deposit", "Withdrawal", "Bank Account"]]
-		for row_num, row in enumerate(data[3:], start=1):
-			if row[2] == "CLOSE":
+		for row_num, row in enumerate(data[15:], start=1):
+			if row[3].startswith("CLOSE BALANCE"):
 				break
-			if len(row) < 8:
+			if row[3].startswith("OPEN BALANCE"):
+				continue
+			if len(row) < 10:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
+
+			date_str = self._parse_date(row[0], formats=["%Y/%m/%d"])
 			try:
-				date_obj = datetime.strptime(row[1], "%Y%m%d")
-				date_str = date_obj.strftime("%Y-%m-%d")
-			except ValueError:
-				frappe.throw(_("Invalid date format in row {0}: '{1}'").format(row_num, row[1]))
-			try:
-				amount_value = float(row[3])
-			except ValueError:
-				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[3]))
+				amount_value = float(row[4])
+			except (ValueError, TypeError):
+				frappe.throw(_("Invalid Amount in row {0}: '{1}'").format(row_num, row[4]))
 			deposit, withdrawal = self._split_amount(amount_value)
-			new_row = [date_str, row[4], row[5], deposit, withdrawal, self.bank_account]
+			new_row = [date_str, row[3], row[7], deposit, withdrawal, self.bank_account]
 			new_data.append(new_row)
 
 		file_data = to_csv(new_data)
