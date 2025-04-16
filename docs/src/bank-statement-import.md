@@ -71,15 +71,28 @@ These are the established `.csv` formats
 
 ### Standard Bank
 
-|     | A    | B         | C      | D    |                          |                 |     |     |
-| --- | ---- | --------- | ------ | ---- | ------------------------ | --------------- | --- | --- |
-| 1   | 0    | 123       | BRANCH | 0    |                          | HOGWARTS        | 0   | 0   |
-| 2   |      | 987654321 | ACC-NO | 0    |                          |                 |     |     |
-| 3   |      | 0         | OPEN   | 1000 | OPEN BALANCE             |                 | 0   | 0   |
-| 4   | HIST | 20250101  |        | -100 | AUTOBANK CASH WITHDRAWAL | CHECK GE 465    | 600 | 0   |
-| 5   | HIST | 20250101  |        | 100  | IB TRANSFER FROM         | COMPANY X 55555 | 380 | 0   |
-| 6   | HIST | 20250101  | ##     | -1   | SERVICE FEE              |                 | 52  | 0   |
-| 7   |      | 0         | CLOSE  | 999  | CLOSE BALANCE            |                 | 0   | 0   |
+| Statement of Account |                          |                  |                                                                   |           |            |      |                                |                    |   |
+|----------------------|--------------------------|------------------|-------------------------------------------------------------------|-----------|------------|------|--------------------------------|--------------------|---|
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| Account Name:        | MY COMPANY PTY LTD       |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| Account No:          | 12345678 - SBZAZAJJ      |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| A/C Type:            | ORD CURRENT ACCOUNT      |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| BIC Code:            | SBZAZAJJ                 |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| Bank Name:           | STANDARD BANK OF SA LTD  |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| Currency:            | ZAR - SOUTH AFRICAN RAND |                  |                                                                   |           |            |      |                                |                    |   |
+|                      |                          |                  |                                                                   |           |            |      |                                |                    |   |
+| Date                 | Value Date               | Statement Number | Description                                                       | Amount    | Balance    | Type | Originator Reference           | Customer Reference |   |
+| 2025/02/04           | 2025/02/04               | 0249             | OPEN BALANCE 0402 000000000000000                                 |           | +509910.25 |      | OPEN BALANCE                   |                    |   |
+| 2025/04/02           | 2025/04/02               | 0250             | IB PAYMENT TO ABSA HOME 12345678 ABSA HOME 2 0204 000000000000111 | -7000.00  | +138985.31 | TRF  | ABSA HOME 12345678 ABSA HOME 2 |                    |   |
+| 2025/04/02           | 2025/04/02               | 0250             | ELECTRONIC BANKING PAYMENT TO 12345 REFERENCE 01 000000000000509  | -22046.86 | +116938.45 | TRF  | REFERENCE 01                   |                    |   |
+| 2025/04/02           | 2025/04/02               | 0250             | ELECTRONIC BANKING PAYMENT TO 12345 REFERENCE 01 000000000000509  | -35448.75 | +81489.70  | TRF  | REFERENCE 01                   |                    |   |
+| 2025/04/02           | 2025/04/02               | 0250             | IB PAYMENT TO SB FLEET MAN 0204 000000000000111                   | -35826.69 | +45663.01  | TRF  | SB FLEET MAN                   |                    |   |
+| 2025/04/02           | 2025/04/02               | 0250             | CLOSE BALANCE 0204 000000000000000                                |           | +45663.01  | TRF  | CLOSE BALANCE                  |                    |   |
 
 ### ABSA
 
