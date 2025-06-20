@@ -203,11 +203,11 @@ class ValueaddedTaxReturn(Document):
 			.left_join(si)
 			.on((gle.voucher_type == "Sales Invoice") & (si.name == gle.voucher_no))
 			.left_join(sitc)
-			.on(sitc.parent == si.name)
+			.on((sitc.parent == si.name) & (sitc.account_head == gle.account))
 			.left_join(pi)
 			.on((gle.voucher_type == "Purchase Invoice") & (pi.name == gle.voucher_no))
 			.left_join(pitc)
-			.on(pitc.parent == pi.name)
+			.on((pitc.parent == pi.name) & (pitc.account_head == gle.account))
 			.select(
 				gle.name,
 				gle.voucher_type,
