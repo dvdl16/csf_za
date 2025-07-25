@@ -187,7 +187,15 @@ class CustomBankStatementImport(BankStatementImport):
 		file_content = file_doc.get_content()
 		data = read_csv_content(file_content)
 
-		expected_headers = ["Account", "Date", "Description", "Reference", "Amount", "Fees", "Balance"]
+		expected_headers = [
+			"Account",
+			"Date",
+			"Description",
+			"Reference",
+			"Amount",
+			"Fees",
+			"Balance",
+		]
 		if data[2][:7] != expected_headers:
 			frappe.throw(_("Unexpected headers in CSV. Expected: {0}").format(", ".join(expected_headers)))
 		if not data:
@@ -214,7 +222,8 @@ class CustomBankStatementImport(BankStatementImport):
 			new_data.append(new_row)
 
 			# Create a new row if this row has a fee
-			if row[5] != None:
+			print(f"\n\n{row[5]}\n\n")
+			if row[5] != None and float(row[5]) != 0:
 				try:
 					fee_value = float(row[5])
 				except ValueError:
