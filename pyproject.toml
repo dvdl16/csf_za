@@ -32,5 +32,5 @@ ensure_newline_before_comments = true
 indent = "\t"
 
 [tool.bench.frappe-dependencies]
-frappe = ">=16.0.0,<17.0.0"
-erpnext = ">=16.0.0,<17.0.0"
+frappe = ">=16.0.0.dev0,<17.0.0"
+erpnext = ">=16.0.0.dev0,<17.0.0"
