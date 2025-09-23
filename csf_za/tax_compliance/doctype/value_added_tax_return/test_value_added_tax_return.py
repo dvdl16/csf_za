@@ -134,6 +134,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Sales Invoice",
+								"account": "VAT Account",
 								"general_ledger_debit": 0,
 								"general_ledger_credit": 15,
 								"sales_invoice_taxes_total": 115,
@@ -147,6 +148,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Purchase Invoice",
+								"account": "VAT Account",
 								"general_ledger_debit": 15,
 								"general_ledger_credit": 0,
 								"purchase_invoice_taxes_total": 115,
@@ -160,6 +162,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Sales Invoice",
+								"account": "VAT Account",
 								"general_ledger_debit": 0,
 								"general_ledger_credit": 15,
 								"sales_invoice_taxes_total": -115,
@@ -173,6 +176,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Purchase Invoice",
+								"account": "VAT Account",
 								"general_ledger_debit": 15,
 								"general_ledger_credit": 0,
 								"purchase_invoice_taxes_total": -115,
@@ -186,6 +190,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Journal Entry",
+								"account": "VAT Account",
 								"general_ledger_debit": 15,
 								"general_ledger_credit": 0,
 							}
@@ -220,6 +225,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Journal Entry",
+								"account": "VAT Account",
 								"general_ledger_debit": -15,
 								"general_ledger_credit": 0,
 							}
@@ -254,6 +260,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 						"voucher": frappe._dict(
 							{
 								"voucher_type": "Journal Entry",
+								"account": "VAT Account",
 								"general_ledger_debit": -15,
 								"general_ledger_credit": 0,
 								"is_cancelled": 1,
@@ -311,3 +318,63 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		self.assertIsNone(results[6].classification)
 		self.assertIsNone(results[6].tax_amount)
 		self.assertIsNone(results[6].incl_tax_amount)
+
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.VAT_RETURN_SETTING_FIELD_MAP",
+		[
+			{
+				"field_name": "zero_rated_vat_field",
+				"classification": "Output - C Zero Rated (excl goods exported)",
+				"reference_doctype": "Sales Invoice",
+			}
+		],
+	)
+	def test_process_gl_entries_with_zero_rate_invoice(
+		self, mock_cached_value, mock_transform, mock_get_cached_doc
+	):
+		mock_settings = frappe._dict(
+			{
+				"tax_accounts": [frappe._dict({"account": "VAT Account"})],
+				"zero_rated_vat_field": "Zero Rated VAT Template",
+			}
+		)
+		mock_vouchers = frappe._dict(
+			{
+				"SI-003": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Sales Invoice",
+								"account": "Debtors",  # Not a tax account
+								"general_ledger_debit": 100,
+								"general_ledger_credit": 0,
+								"sales_invoice_taxes_total": 100,
+								"taxes_and_charges_template": "Zero Rated VAT Template",
+								"is_cancelled": 0,
+							}
+						)
+					}
+				)
+			}
+		)
+
+		mock_get_cached_doc.return_value = mock_settings
+		mock_transform.return_value = mock_vouchers
+		mock_cached_value.side_effect = lambda doctype, docname, fieldname: "Classified"
+
+		vat_return = frappe.new_doc("Value-added Tax Return")
+		results = vat_return.process_gl_entries([])
+
+		self.assertEqual(len(results), 1)
+		self.assertEqual(results[0].classification, "Output - C Zero Rated (excl goods exported)")
+		self.assertEqual(results[0].tax_amount, 0)
+		self.assertEqual(results[0].incl_tax_amount, 100)

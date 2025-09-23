@@ -210,6 +210,7 @@ class ValueaddedTaxReturn(Document):
 			.on((pitc.parent == pi.name) & (pitc.account_head == gle.account))
 			.select(
 				gle.name,
+				gle.account,
 				gle.voucher_type,
 				gle.voucher_no,
 				gle.posting_date,
@@ -236,7 +237,22 @@ class ValueaddedTaxReturn(Document):
 			.where(
 				(gle.posting_date >= self.date_from)
 				& (gle.posting_date <= self.date_to)
-				& (gle.account.isin(tax_accounts))
+				& (
+					gle.account.isin(tax_accounts)
+					| (
+						(gle.voucher_type == "Sales Invoice")
+						& si.taxes_and_charges.isnotnull()
+						& si.debit_to.isnotnull()
+						& (gle.account == si.debit_to)
+					)
+					# Exclude Purchase Invoices with 0 tax for now
+					# | (
+					# 	(gle.voucher_type == "Purchase Invoice")
+					# 	& pi.taxes_and_charges.isnotnull()
+					# 	& pi.credit_to.isnotnull()
+					# 	& (gle.account == pi.credit_to)
+					# )
+				)
 			)
 		)
 
@@ -261,7 +277,7 @@ class ValueaddedTaxReturn(Document):
 			entry for entry in VAT_RETURN_SETTING_FIELD_MAP if vat_return_settings.get(entry["field_name"])
 		]
 
-		vouchers = transform_gl_entries(gl_entries)
+		vouchers = transform_gl_entries(gl_entries, tax_accounts)
 
 		for voucher_no, item in vouchers.items():
 			voucher = item.voucher
@@ -270,7 +286,10 @@ class ValueaddedTaxReturn(Document):
 			if voucher.is_cancelled:
 				continue
 
-			voucher.tax_amount = voucher.general_ledger_debit or voucher.general_ledger_credit
+			if hasattr(voucher, "account") and voucher.account in tax_accounts:
+				voucher.tax_amount = voucher.general_ledger_debit or voucher.general_ledger_credit
+			else:
+				voucher.tax_amount = 0
 
 			voucher.classification_debugging = "🚀"
 			if voucher.voucher_type in ("Sales Invoice", "Purchase Invoice"):
@@ -278,12 +297,16 @@ class ValueaddedTaxReturn(Document):
 					voucher.sales_invoice_taxes_total or voucher.purchase_invoice_taxes_total
 				)
 
+				# For vouchers with zero-rated tax (aka tax amount = 0), set the total amount
+				if not voucher.incl_tax_amount:
+					voucher.incl_tax_amount = voucher.general_ledger_debit or voucher.general_ledger_credit
+
 				# If the voucher_type is a reversal (e.g. Credit and Debit Notes, change the sign of tax_amount)
 				if voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
 					voucher.tax_amount = voucher.tax_amount * -1
 
 				voucher.classification_debugging += (
-					"\n🚀 voucher_type is a 'Sales Invoice' or 'Purchase Invoice')"
+					"\n🚀 voucher_type is a 'Sales Invoice' or 'Purchase Invoice'"
 				)
 				voucher.classification_debugging += (
 					f"\n🚀 taxes_and_charges_template = '{voucher.taxes_and_charges_template}'"
@@ -414,7 +437,7 @@ class ValueaddedTaxReturn(Document):
 		return [voucher.voucher for voucher in vouchers.values()]
 
 
-def transform_gl_entries(gl_entries):
+def transform_gl_entries(gl_entries, tax_accounts):
 	"""
 	Transform flat list of entries to a dict with voucher_no as key
 	        E.g.
@@ -461,8 +484,19 @@ def transform_gl_entries(gl_entries):
 	"""
 	vouchers = {}
 	for entry in gl_entries:
-		vouchers.setdefault(entry.name, frappe._dict({"voucher": entry, "linked_journal_entries": []}))[
-			"linked_journal_entries"
-		].append(entry)
+		voucher_no = entry.voucher_no
+		if voucher_no not in vouchers:
+			vouchers[voucher_no] = frappe._dict({"voucher": entry, "linked_journal_entries": []})
+		else:
+			# If the new entry is from a tax account, and the old one is not, then it becomes the main voucher
+			if (
+				hasattr(entry, "account")
+				and hasattr(vouchers[voucher_no].voucher, "account")
+				and entry.account in tax_accounts
+				and vouchers[voucher_no].voucher.account not in tax_accounts
+			):
+				vouchers[voucher_no].voucher = entry
+
+		vouchers[voucher_no]["linked_journal_entries"].append(entry)
 
 	return vouchers
