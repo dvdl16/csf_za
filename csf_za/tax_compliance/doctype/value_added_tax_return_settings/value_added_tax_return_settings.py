@@ -12,17 +12,17 @@ VAT_RETURN_SETTING_FIELD_MAP = [
 	},
 	{
 		"field_name": "standard_rate_capital",
-		"classification": "Output - B Standard rate (only capital goods) ",
+		"classification": "Output - B Standard rate (only capital goods)",
 		"reference_doctype": "Sales Invoice",
 	},
 	{
 		"field_name": "zero_rate_non_exported",
-		"classification": "Output - C Zero Rated (excl goods exported) ",
+		"classification": "Output - C Zero Rated (excl goods exported)",
 		"reference_doctype": "Sales Invoice",
 	},
 	{
 		"field_name": "zero_rate_exported",
-		"classification": "Output - D Zero Rated (only goods exported) ",
+		"classification": "Output - D Zero Rated (only goods exported)",
 		"reference_doctype": "Sales Invoice",
 	},
 	{
