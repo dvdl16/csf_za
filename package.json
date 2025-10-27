@@ -19,6 +19,7 @@
   "scripts": {
     "docs:dev": "vitepress dev docs --host",
     "build": "vitepress build docs && ./prepare_help_files.sh",
+    "docs:build-gh": "vitepress build docs --outDir docs/.vitepress/dist",
     "docs:preview": "vitepress preview docs"
   }
 }
