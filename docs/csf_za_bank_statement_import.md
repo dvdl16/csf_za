@@ -1,23 +1,41 @@
-# Bank Statement Import for local banks
+# Bank Statement Import for South African Banks
 
-🚧 This documentation is still under construction 🚧
-- [x] Create page for feautre
-- [ ] Add all steps with screenshots
+This feature simplifies the process of importing bank statements by allowing you to directly upload CSV files from major South African banks without needing to manually reformat them. The system automatically parses the bank-specific file format and converts it into a standardized structure that ERPNext can use for reconciliation.
 
+Currently, the following banks are supported:
+- First National Bank
+- Bank Zero
+- Capitec
+- Nedbank
+- Standard Bank
+- ABSA
 
 ## Setup
 
-On the relevant **Bank** records, choose the correct South African Bank:
+To enable the automatic parsing, you must configure the relevant **Bank** record in your system.
+
+1.  Navigate to the **Bank** list (you can search for "Bank" in the Awesome Bar).
+2.  Select the bank you want to configure (e.g., "First National Bank").
+3.  In the **Bank Statement Template** field, choose the corresponding bank name from the dropdown list.
 
 ![Bank Template on Bank doctype](images/bank-template.png)
 
-## Bank Statement Import
+## Bank Statement Import Process
 
-When attaching a `.csv` file on a **Bank Statement Import**, the parsing would be performed according to the *Bank Statement Template* of the linked **Bank**
+Once the setup is complete, importing a bank statement is straightforward.
 
-## Template Definitions
+1.  Navigate to the **Bank Statement Import** doctype and create a new record.
+2.  Select the **Bank Account** for which you are importing the statement. The system will use the **Bank** linked to this account to determine which template to use.
+3.  Upload the original CSV file you downloaded from your bank in the **Attach File** field.
+4.  Upon saving the document, the system performs the following actions in the background:
+    *   It reads the uploaded CSV file.
+    *   Based on the template selected on the **Bank** record, it parses the bank-specific columns and data.
+    *   It creates a new, standardized CSV file with the columns required by ERPNext (e.g., splitting a single "Amount" column into "Deposit" and "Withdrawal").
+    *   This new file is then attached to the document and used for the bank reconciliation process, making the import seamless for the user.
 
-These are the established `.csv` formats
+## Supported Formats
+
+The following tables show the specific CSV formats that the system is configured to parse for each bank.
 
 ### First National Bank
 

@@ -11,3 +11,7 @@ csf_za/public/node_modules
 
 # Package management is managed by bench
 yarn.lock
+
+# Docs
+docs/.vitepress/dist
+docs/.vitepress/cache
