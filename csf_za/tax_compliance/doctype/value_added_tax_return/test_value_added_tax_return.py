@@ -7,10 +7,67 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 
+def create_account(account_name, parent_account, company, account_type=None, is_group=0):
+	if frappe.db.exists("Account", {"account_name": account_name, "company": company}):
+		return frappe.get_doc("Account", {"account_name": account_name, "company": company})
+
+	account = frappe.get_doc(
+		{
+			"doctype": "Account",
+			"account_name": account_name,
+			"parent_account": parent_account,
+			"company": company,
+			"is_group": is_group,
+		}
+	)
+	if account_type:
+		account.account_type = account_type
+	account.insert(ignore_permissions=True)
+	return account
+
+
 class TestValueaddedTaxReturn(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()  # important to call super() methods when extending TestCase.
+
+	def setUp(self):
+		frappe.db.delete("GL Entry")
+		frappe.db.delete("Journal Entry")
+		frappe.db.delete("Value-added Tax Return GL Entry")
+		frappe.db.delete("Value-added Tax Return")
+
+		self.company = "_Test Company"
+		self.customer = "_Test Customer"
+
+		# Create accounts
+		self.vat_account = create_account(
+			"VAT Test", "Tax Assets - _TC", self.company, account_type="Tax"
+		)
+		self.bad_debts_account = create_account(
+			"Bad Debts Test", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		# Set classification on bad debts account
+		self.bad_debts_account.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		self.bad_debts_account.save()
+
+		self.customer_account = "Debtors - _TC"
+
+		# Setup VAT Return Settings
+		if not frappe.db.exists("Value-added Tax Return Settings", self.company):
+			frappe.get_doc(
+				{
+					"doctype": "Value-added Tax Return Settings",
+					"company": self.company,
+					"transaction_classification": "Taxes and Charges Templates",
+				}
+			).insert()
+		vat_settings = frappe.get_doc("Value-added Tax Return Settings", self.company)
+		vat_settings.tax_accounts = []
+		vat_settings.append("tax_accounts", {"account": self.vat_account.name})
+		vat_settings.save()
 
 	def test_refresh_output_tax_fields(self):
 		# Setup the mock object and its returns for gl_entries
@@ -378,3 +435,60 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		self.assertEqual(results[0].classification, "Output - C Zero Rated (excl goods exported)")
 		self.assertEqual(results[0].tax_amount, 0)
 		self.assertEqual(results[0].incl_tax_amount, 100)
+
+	def test_journal_entry_write_off_classification(self):
+		# Create Journal Entry for write-off
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Write Off Entry",
+				"company": self.company,
+				"posting_date": "2025-08-21",
+				"accounts": [
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": self.bad_debts_account.name, "debit_in_account_currency": 100},
+					{
+						"account": self.customer_account,
+						"credit_in_account_currency": 50,
+						"party_type": "Customer",
+						"party": self.customer,
+					},
+					{
+						"account": self.customer_account,
+						"credit_in_account_currency": 65,
+						"party_type": "Customer",
+						"party": self.customer,
+					},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		# Create VAT Return
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		# Run get_gl_entries
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+
+		vat_return.save()
+
+		# Assertions
+		self.assertEqual(len(vat_return.gl_entries), 1)
+		write_off_entry = vat_return.gl_entries[0]
+		self.assertEqual(
+			write_off_entry.classification, "Input - C Other goods supplied to you (excl capital goods)"
+		)
+		self.assertEqual(write_off_entry.tax_amount, 15)
+		self.assertEqual(write_off_entry.incl_tax_amount, 115)

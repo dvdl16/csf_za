@@ -396,6 +396,54 @@ class ValueaddedTaxReturn(Document):
 				tax_leg = next(
 					(je for je in filtered_journal_entries if je.journal_entry_account in tax_accounts), None
 				)
+
+				if tax_leg:
+					remaining_entries = [je for je in filtered_journal_entries if je != tax_leg]
+
+					if tax_leg.journal_entry_account_debit != 0:
+						# Tax leg is a debit (input tax or reduction of output tax)
+						other_debits = [je for je in remaining_entries if je.journal_entry_account_debit != 0]
+						other_credits = [je for je in remaining_entries if je.journal_entry_account_credit != 0]
+
+						# This handles write-offs where there is one other debit (e.g. bad debts)
+						# and multiple credit entries (to customer account)
+						if len(other_debits) == 1 and other_credits:
+							excl_tax_leg = other_debits[0]
+							voucher.incl_tax_amount = sum(c.journal_entry_account_credit for c in other_credits)
+
+							voucher.classification_debugging += (
+								f"\n🚀 tax_leg = '{tax_leg.journal_entry_account}': '{tax_leg.journal_entry_account_debit}'"
+							)
+							voucher.classification_debugging += f"\n🚀 incl_tax_amount = '{voucher.incl_tax_amount}'"
+							voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_debit}'"
+
+							voucher.classification = frappe.get_cached_value(
+								"Account", excl_tax_leg.journal_entry_account, "custom_vat_return_debit_classification"
+							)
+							voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
+							continue
+
+					elif tax_leg.journal_entry_account_credit != 0:
+						# Tax leg is a credit (output tax)
+						other_debits = [je for je in remaining_entries if je.journal_entry_account_debit != 0]
+						other_credits = [je for je in remaining_entries if je.journal_entry_account_credit != 0]
+
+						# This handles cases with one other credit and multiple debit entries
+						if len(other_credits) == 1 and other_debits:
+							excl_tax_leg = other_credits[0]
+							voucher.incl_tax_amount = sum(d.journal_entry_account_debit for d in other_debits)
+
+							voucher.classification_debugging += f"\n🚀 tax_leg = '{tax_leg.journal_entry_account}': '{tax_leg.journal_entry_account_credit}'"
+							voucher.classification_debugging += f"\n🚀 incl_tax_amount = '{voucher.incl_tax_amount}'"
+							voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_credit}'"
+
+							voucher.classification = frappe.get_cached_value(
+								"Account", excl_tax_leg.journal_entry_account, "custom_vat_return_credit_classification"
+							)
+							voucher.classification_debugging += f"\n🚀 'Classify Credit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
+							continue
+
+				# Fallback to old logic for simple 3-leg entries.
 				incl_tax_leg = None
 				excl_tax_leg = None
 				try:
@@ -407,7 +455,7 @@ class ValueaddedTaxReturn(Document):
 						[je for je in filtered_journal_entries if je != tax_leg],
 						key=lambda je: abs(je.journal_entry_account_credit or je.journal_entry_account_debit),
 					)
-				except ValueError as e:
+				except (ValueError, TypeError) as e:
 					voucher.classification_debugging += f"\n🚀 {e}]'"
 
 				if all([tax_leg, incl_tax_leg, excl_tax_leg]):
