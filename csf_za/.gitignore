@@ -1,0 +1,12 @@
+# Ignore vitepress dist files
+www/csf_za_*.py
+www/404.py
+www/csf_za_*.html
+www/404.html
+www/hashmap.json
+www/vp-icons.css
+www/assets
+public/app.*.js
+public/csf_za_*.js
+public/style.*.css
+public/chunks

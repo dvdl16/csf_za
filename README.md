@@ -20,7 +20,7 @@ MIT
 
 ### User documentation
 
-User documentation is hosted at [csf-za-docs.finfoot.tech](https://csf-za-docs.finfoot.tech)
+📄 [South Africa Customisations Documentation](https://csf-za-docs.starktail.com)
 
 ### Development
 
@@ -73,11 +73,6 @@ git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-r
 semgrep --config=/workspace/development/frappe-semgrep-rules/rules apps/csf_za
 ```
 
+#### Updating Documentation
 
-The documentation has been generated using [mdBook](https://rust-lang.github.io/mdBook/guide/creating.html)
-
-Make sure you have [mdbook](https://rust-lang.github.io/mdBook/guide/installation.html) installed/downloaded. To modify and test locally:
-```shell
-cd docs
-mdbook serve --open
-```
+For documentation, we use [vitepress](https://vitepress.dev/). You can run `yarn docs:dev` to preview the docs when applying changes

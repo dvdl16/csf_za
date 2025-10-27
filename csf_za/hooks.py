@@ -254,3 +254,13 @@ fixtures = [
 		],
 	}
 ]
+
+
+standard_help_items = [
+	{
+		"item_label": "South Africa Customisations Documentation",
+		"item_type": "Route",
+		"route": "/csf_za_introduction",
+		"is_standard": 1,
+	},
+]
