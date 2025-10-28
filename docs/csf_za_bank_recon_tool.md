@@ -22,7 +22,7 @@ To use this feature, you first need to configure the relevant expense accounts. 
 Once the accounts are set up, the process in the Bank Reconciliation Tool is streamlined.
 
 1.  Open the **Bank Reconciliation Tool** and load your bank transactions.
-2.  For a given bank transaction, click on **Create Voucher**.
+2.  For a given bank transaction, click on `Create Voucher`.
 
     ![Bank Reconciliation 1](images/bank-reconciliation-1.png)
 
