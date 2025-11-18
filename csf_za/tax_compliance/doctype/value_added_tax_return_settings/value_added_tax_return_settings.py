@@ -11,6 +11,11 @@ VAT_RETURN_SETTING_FIELD_MAP = [
 		"reference_doctype": "Sales Invoice",
 	},
 	{
+		"field_name": "standard_rate_non_capital_2",
+		"classification": "Output - A Standard rate (excl capital goods)",
+		"reference_doctype": "Sales Invoice",
+	},
+	{
 		"field_name": "standard_rate_capital",
 		"classification": "Output - B Standard rate (only capital goods)",
 		"reference_doctype": "Sales Invoice",
