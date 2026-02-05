@@ -135,9 +135,7 @@ def get_data(filters):
 def group_by_classification(data):
 	""" """
 	meta = frappe.get_meta("Value-added Tax Return GL Entry", cached=False)
-	classification_field = next(
-		(field for field in meta.fields if field.fieldname == "classification")
-	)
+	classification_field = next(field for field in meta.fields if field.fieldname == "classification")
 	classifications = classification_field.options.split("\n")
 
 	grouped_data = {classification: [] for classification in classifications}

@@ -41,9 +41,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		self.customer = "_Test Customer"
 
 		# Create accounts
-		self.vat_account = create_account(
-			"VAT Test", "Tax Assets - _TC", self.company, account_type="Tax"
-		)
+		self.vat_account = create_account("VAT Test", "Tax Assets - _TC", self.company, account_type="Tax")
 		self.bad_debts_account = create_account(
 			"Bad Debts Test", "Direct Expenses - _TC", self.company, account_type="Expense Account"
 		)
@@ -154,9 +152,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 	@patch(
 		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
 	)
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries"
-	)
+	@patch("csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries")
 	@patch(
 		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
 	)
@@ -345,9 +341,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		self.assertEqual(results[0].incl_tax_amount, 115)
 
 		# PI-001: Purchase Invoice with no VAT Template
-		self.assertEqual(
-			results[1].classification, None
-		)  # Assuming no classification for missing template
+		self.assertEqual(results[1].classification, None)  # Assuming no classification for missing template
 		self.assertEqual(results[1].tax_amount, 15)
 		self.assertEqual(results[1].incl_tax_amount, 115)
 
@@ -379,9 +373,7 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 	@patch(
 		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
 	)
-	@patch(
-		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries"
-	)
+	@patch("csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries")
 	@patch(
 		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
 	)
