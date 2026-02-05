@@ -40,27 +40,27 @@ body:
     label: Environment and Versions
     description: |
       examples:
-        - **Frappe Version**: v15.6.9
-        - **ERPNext Version**: v15.6.9
-        - **South Africa Customisations Version**: v0.6.2
+        - **Frappe Version**: v15.88.0
+        - **ERPNext Version**: v15.88.0
+        - **South Africa Customisations** (csf_za): v0.6.2
     value: |
         - Frappe Version: 
         - ERPNext Version: 
-        - South Africa Customisations Version: 
+        - South Africa Customisations: 
     render: markdown
   validations:
     required: false
 - type: dropdown
   id: version
   attributes:
-    label: Operating System
-    description: On what OS are you seeing the problem on?
+    label: Hosting Method
+    description: How is frappe installed/used?
     multiple: true
     options:
-      - Windows
-      - MacOS
-      - Android
-      - iOS
+      - Frappe Cloud
+      - Custom Frappe Press instance
+      - Remote or local Docker Instance
+      - Barebones
       - Other
   validations:
     required: true
@@ -75,3 +75,4 @@ body:
       - Firefox
       - Safari
       - Other
+      - N/A
