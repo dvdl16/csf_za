@@ -12,23 +12,23 @@ from frappe.utils import flt
 
 @frappe.whitelist()
 def custom_create_journal_entry_bts(
-	bank_transaction_name,
-	reference_number=None,
-	reference_date=None,
-	posting_date=None,
-	entry_type=None,
-	second_account=None,
-	mode_of_payment=None,
-	party_type=None,
-	party=None,
-	allow_edit=None,
+	bank_transaction_name: str,
+	reference_number: str | None = None,
+	reference_date: str | None = None,
+	posting_date: str | None = None,
+	entry_type: str | None = None,
+	second_account: str | None = None,
+	mode_of_payment: str | None = None,
+	party_type: str | None = None,
+	party: str | None = None,
+	allow_edit: str | None = None,
 	# ================================================================================================= #
 	# ==================================== Custom code starts here ==================================== #
 	# ================================================================================================= #
-	cost_center=None,
-	custom_tax_account=None,
-	custom_tax_rate_for_bank_recon=None,
-	custom_cost_center_for_tax_account=None,
+	cost_center: str | None = None,
+	custom_tax_account: str | None = None,
+	custom_tax_rate_for_bank_recon: str | None = None,
+	custom_cost_center_for_tax_account: str | None = None,
 ):
 	"""
 	Override erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool.create_journal_entry_bts

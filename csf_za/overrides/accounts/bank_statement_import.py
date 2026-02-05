@@ -374,7 +374,9 @@ class CustomBankStatementImport(BankStatementImport):
 
 
 @frappe.whitelist()
-def custom_get_preview_from_template(data_import, import_file=None, google_sheets_url=None):
+def custom_get_preview_from_template(
+	data_import: str, import_file: str | None = None, google_sheets_url: str | None = None
+):
 	"""
 	Override get_preview_from_template to only generate a preview of the bank statement import data
 	if there are no nulls in the content.
