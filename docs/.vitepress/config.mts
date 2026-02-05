@@ -2,8 +2,8 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "South Africa Customisations",
-  description: "Country Specific Functionality for South Africa",
+  title: "South Africa Customisations Documentation",
+  description: "South Africa Customisations Documentation",
   outDir: '../csf_za/www',
   assetsDir: 'assets/csf_za',
   themeConfig: {
@@ -22,12 +22,13 @@ export default defineConfig({
     ],
 
     socialLinks: [
+      { icon: 'whatsapp', link: 'https://wa.me/27686318877?text=Hi%2C%20I%20have%20a%20question%20on%20South%20Africa%20Customisations'},
       { icon: 'mailgun', link: 'mailto:support@starktail.com'},
-      { icon: 'github', link: 'https://github.com/dvdl16/csf_za' }
+      { icon: 'github', link: 'https://github.com/Starktail/csf_za' }
     ],
 
     editLink: {
-      pattern: 'https://github.com/dvdl16/csf_za/edit/version-15/docs/:path'
+      pattern: 'https://github.com/Starktail/csf_za/edit/version-15/docs/:path'
     }
   },
   // Set metaChunk to avoid having window.__VP_HASH_MAP__ in the generated HTML, 

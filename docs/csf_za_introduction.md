@@ -17,10 +17,10 @@ This is an [Frappe](https://frappeframework.com/) custom app, intended to add So
 
 ## Installation
 
-Go [here](https://github.com/dvdl16/second-ride-custom) for installation.
+Go [here](https://github.com/Starktail/csf_za) for installation.
 
 ## Support
 
 - [Starktail Website](https://starktail.com)
 - [Starktail Email Support](mailto:support@starktail.com)
-
+- [Starktail WhatsApp Support](https://wa.me/27686318877?text=Hi%2C%20I%20have%20a%20question%20on%20South%20Africa%20Customisations)

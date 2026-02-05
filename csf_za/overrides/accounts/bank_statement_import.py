@@ -211,7 +211,7 @@ class CustomBankStatementImport(BankStatementImport):
 			date_str = self._parse_date(row[1], formats=["%d/%m/%Y"])
 
 			# If amount is None, but there is a value in "Fees", we can safely skip
-			if row[4] == None and row[5] != None:
+			if row[4] is None and row[5] is not None:
 				continue
 			try:
 				amount_value = float(row[4])
@@ -223,7 +223,7 @@ class CustomBankStatementImport(BankStatementImport):
 
 			# Create a new row if this row has a fee
 			print(f"\n\n{row[5]}\n\n")
-			if row[5] != None and float(row[5]) != 0:
+			if row[5] is not None and float(row[5]) != 0:
 				try:
 					fee_value = float(row[5])
 				except ValueError:
@@ -258,7 +258,7 @@ class CustomBankStatementImport(BankStatementImport):
 			if len(row) < 4:
 				frappe.throw(_("Row {0} has insufficient columns.").format(row_num))
 			# Skip rows with blank Amounts that do not change the running balance
-			if row[2] == None and row[3] == running_balance:
+			if row[2] is None and row[3] == running_balance:
 				continue
 
 			# Skip unwanted rows
@@ -357,7 +357,7 @@ class CustomBankStatementImport(BankStatementImport):
 
 			file_content = file_content.replace("\x00", "")
 
-			file_name, extension = file_doc.get_extension()
+			file_name, _extension = file_doc.get_extension()
 			_file = frappe.get_doc(
 				{
 					"doctype": "File",
@@ -374,7 +374,9 @@ class CustomBankStatementImport(BankStatementImport):
 
 
 @frappe.whitelist()
-def custom_get_preview_from_template(data_import, import_file=None, google_sheets_url=None):
+def custom_get_preview_from_template(
+	data_import: str, import_file: str | None = None, google_sheets_url: str | None = None
+):
 	"""
 	Override get_preview_from_template to only generate a preview of the bank statement import data
 	if there are no nulls in the content.

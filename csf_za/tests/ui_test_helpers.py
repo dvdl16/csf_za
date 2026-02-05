@@ -76,7 +76,7 @@ def setup_data_for_payment_entry_customisation_tests(mode_of_payment_name, accou
 
 def create_gl_account_for_bank(account_name):
 	try:
-		gl_account = frappe.get_doc(
+		frappe.get_doc(
 			{
 				"doctype": "Account",
 				"company": get_default_company(),

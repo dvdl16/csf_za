@@ -21,18 +21,13 @@ class TestCustomBankStatementImport(FrappeTestCase):
 		create_bank_account()
 
 	def test_modify_uploaded_bank_statement_function_runs_on_validate(self):
-		bank_statement_import = make_bank_statement_import_test_record(
-			do_not_save=True, do_not_submit=True
-		)
+		bank_statement_import = make_bank_statement_import_test_record(do_not_save=True, do_not_submit=True)
 		bank_statement_import.modify_uploaded_bank_statement = MagicMock()
 		bank_statement_import.save()
 		assert bank_statement_import.modify_uploaded_bank_statement.called
 
 
-def create_bank_account(
-	bank_name=default_bank, account_name="_Test Bank", company=default_company
-):
-
+def create_bank_account(bank_name=default_bank, account_name="_Test Bank", company=default_company):
 	try:
 		gl_account = frappe.get_doc(
 			{
