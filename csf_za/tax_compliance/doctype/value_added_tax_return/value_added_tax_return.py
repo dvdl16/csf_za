@@ -351,6 +351,7 @@ class ValueaddedTaxReturn(Document):
 				filtered_out = []
 				for journal_entry in item.linked_journal_entries:
 					if journal_entry not in filtered_out:
+						contra_entry_with_same_amount = None
 						if journal_entry.journal_entry_account_debit != 0:
 							debit_amount = journal_entry.journal_entry_account_debit
 							contra_entry_with_same_amount = next(
@@ -375,10 +376,9 @@ class ValueaddedTaxReturn(Document):
 							filtered_out += [contra_entry_with_same_amount, journal_entry]
 
 				filtered_journal_entries = [
-					item for item in item.linked_journal_entries if item not in filtered_out
+					je_entry for je_entry in item.linked_journal_entries if je_entry not in filtered_out
 				]
 
-				# If there are no entries remaining after filtering, assume it is an entry for SARS Payment/Receipt
 				if len(filtered_journal_entries) == 0 and len(filtered_out) > 0:
 					voucher.classification = "SARS Payment/Receipt"
 					continue
@@ -388,89 +388,150 @@ class ValueaddedTaxReturn(Document):
 				)
 				voucher.classification_debugging += f"\n🚀 filtered_journal_entries = rows {[je.journal_entry_account_idx for je in filtered_journal_entries]}"
 
-				# Identify the tax, tax inclusive and tax exclusve components of manual Journal Entries
-				tax_leg = next(
-					(je for je in filtered_journal_entries if je.journal_entry_account in tax_accounts), None
+				# The voucher is the tax leg (guaranteed by transform_gl_entries).
+				# Isolate this GL Entry's JEA row, other tax-account JEA rows, and non-tax JEA rows.
+				this_gl_debit = voucher.general_ledger_debit or 0
+				this_gl_credit = voucher.general_ledger_credit or 0
+
+				this_tax_jea = next(
+					(
+						je
+						for je in filtered_journal_entries
+						if je.journal_entry_account == voucher.account
+						and abs((je.journal_entry_account_debit or 0) - this_gl_debit) < 0.01
+						and abs((je.journal_entry_account_credit or 0) - this_gl_credit) < 0.01
+					),
+					None,
+				)
+				other_tax_jea_rows = [
+					je
+					for je in filtered_journal_entries
+					if je.journal_entry_account in tax_accounts and je is not this_tax_jea
+				]
+				non_tax_entries = [
+					je
+					for je in filtered_journal_entries
+					if je not in other_tax_jea_rows and je is not this_tax_jea
+				]
+
+				voucher.classification_debugging += f"\n🚀 this_tax_jea idx = {this_tax_jea.journal_entry_account_idx if this_tax_jea else 'None'}"
+				voucher.classification_debugging += (
+					f"\n🚀 other_tax_jea rows = {[je.journal_entry_account_idx for je in other_tax_jea_rows]}"
+				)
+				voucher.classification_debugging += (
+					f"\n🚀 non_tax_entries = {[je.journal_entry_account_idx for je in non_tax_entries]}"
 				)
 
-				if tax_leg:
-					remaining_entries = [je for je in filtered_journal_entries if je != tax_leg]
+				# Scenario 1: write-off pattern — 1 non-tax debit + multiple credits (or vice versa).
+				# Also handles standard 3-leg JEs (1 expense debit + 1 offset credit).
+				if this_gl_debit:
+					other_debits = [je for je in non_tax_entries if je.journal_entry_account_debit != 0]
+					other_credits = [je for je in non_tax_entries if je.journal_entry_account_credit != 0]
+					if len(other_debits) == 1 and other_credits:
+						excl_tax_leg = other_debits[0]
+						voucher.incl_tax_amount = sum(c.journal_entry_account_credit for c in other_credits)
+						voucher.classification = frappe.get_cached_value(
+							"Account",
+							excl_tax_leg.journal_entry_account,
+							"custom_vat_return_debit_classification",
+						)
+						voucher.classification_debugging += (
+							f"\n🚀 [strategy 1] excl_tax_leg = '{excl_tax_leg.journal_entry_account}'"
+							f"\n🚀 classification = '{voucher.classification}'"
+						)
+						continue
 
-					if tax_leg.journal_entry_account_debit != 0:
-						# Tax leg is a debit (input tax or reduction of output tax)
-						other_debits = [je for je in remaining_entries if je.journal_entry_account_debit != 0]
-						other_credits = [
-							je for je in remaining_entries if je.journal_entry_account_credit != 0
+				elif this_gl_credit:
+					other_debits = [je for je in non_tax_entries if je.journal_entry_account_debit != 0]
+					other_credits = [je for je in non_tax_entries if je.journal_entry_account_credit != 0]
+					if len(other_credits) == 1 and other_debits:
+						excl_tax_leg = other_credits[0]
+						voucher.incl_tax_amount = sum(d.journal_entry_account_debit for d in other_debits)
+						voucher.classification = frappe.get_cached_value(
+							"Account",
+							excl_tax_leg.journal_entry_account,
+							"custom_vat_return_credit_classification",
+						)
+						voucher.classification_debugging += (
+							f"\n🚀 [strategy 1] excl_tax_leg = '{excl_tax_leg.journal_entry_account}'"
+							f"\n🚀 classification = '{voucher.classification}'"
+						)
+						continue
+
+				# Scenario 2: adjacent-index pairing — find the non-tax JEA row immediately
+				# before (or after) this tax leg by index order. Used when multiple expense
+				# accounts exist in the same JE (multiple VAT legs).
+				if this_tax_jea and non_tax_entries:
+					this_idx = this_tax_jea.journal_entry_account_idx or 0
+					non_tax_sorted = sorted(non_tax_entries, key=lambda je: je.journal_entry_account_idx or 0)
+					if this_gl_debit:
+						preceding = [
+							je
+							for je in non_tax_sorted
+							if (je.journal_entry_account_idx or 0) < this_idx
+							and je.journal_entry_account_debit != 0
 						]
-
-						# This handles write-offs where there is one other debit (e.g. bad debts)
-						# and multiple credit entries (to customer account)
-						if len(other_debits) == 1 and other_credits:
-							excl_tax_leg = other_debits[0]
-							voucher.incl_tax_amount = sum(
-								c.journal_entry_account_credit for c in other_credits
-							)
-
-							voucher.classification_debugging += f"\n🚀 tax_leg = '{tax_leg.journal_entry_account}': '{tax_leg.journal_entry_account_debit}'"
-							voucher.classification_debugging += (
-								f"\n🚀 incl_tax_amount = '{voucher.incl_tax_amount}'"
-							)
-							voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_debit}'"
-
+						following = [
+							je
+							for je in non_tax_sorted
+							if (je.journal_entry_account_idx or 0) > this_idx
+							and je.journal_entry_account_debit != 0
+						]
+					else:
+						preceding = [
+							je
+							for je in non_tax_sorted
+							if (je.journal_entry_account_idx or 0) < this_idx
+							and je.journal_entry_account_credit != 0
+						]
+						following = [
+							je
+							for je in non_tax_sorted
+							if (je.journal_entry_account_idx or 0) > this_idx
+							and je.journal_entry_account_credit != 0
+						]
+					adjacent = (preceding[-1] if preceding else None) or (following[0] if following else None)
+					if adjacent:
+						excl_amount = (
+							adjacent.journal_entry_account_debit or adjacent.journal_entry_account_credit or 0
+						)
+						voucher.incl_tax_amount = excl_amount + (this_gl_debit or this_gl_credit)
+						if this_gl_debit:
 							voucher.classification = frappe.get_cached_value(
 								"Account",
-								excl_tax_leg.journal_entry_account,
+								adjacent.journal_entry_account,
 								"custom_vat_return_debit_classification",
 							)
-							voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
-							continue
-
-					elif tax_leg.journal_entry_account_credit != 0:
-						# Tax leg is a credit (output tax)
-						other_debits = [je for je in remaining_entries if je.journal_entry_account_debit != 0]
-						other_credits = [
-							je for je in remaining_entries if je.journal_entry_account_credit != 0
-						]
-
-						# This handles cases with one other credit and multiple debit entries
-						if len(other_credits) == 1 and other_debits:
-							excl_tax_leg = other_credits[0]
-							voucher.incl_tax_amount = sum(d.journal_entry_account_debit for d in other_debits)
-
-							voucher.classification_debugging += f"\n🚀 tax_leg = '{tax_leg.journal_entry_account}': '{tax_leg.journal_entry_account_credit}'"
-							voucher.classification_debugging += (
-								f"\n🚀 incl_tax_amount = '{voucher.incl_tax_amount}'"
-							)
-							voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_credit}'"
-
+						else:
 							voucher.classification = frappe.get_cached_value(
 								"Account",
-								excl_tax_leg.journal_entry_account,
+								adjacent.journal_entry_account,
 								"custom_vat_return_credit_classification",
 							)
-							voucher.classification_debugging += f"\n🚀 'Classify Credit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
-							continue
+						voucher.classification_debugging += (
+							f"\n🚀 [strategy 2] adjacent idx={adjacent.journal_entry_account_idx}"
+							f" account='{adjacent.journal_entry_account}'"
+							f"\n🚀 classification = '{voucher.classification}'"
+						)
+						continue
 
-				# Fallback to old logic for simple 3-leg entries.
+				# Scenario 3: min/max heuristic — fallback for entries where secanrios 1 and 2
+				# did not resolve (e.g. no clear single-debit / single-credit pattern).
 				incl_tax_leg = None
 				excl_tax_leg = None
 				try:
 					incl_tax_leg = max(
-						[je for je in filtered_journal_entries if je != tax_leg],
+						non_tax_entries,
 						key=lambda je: abs(je.journal_entry_account_credit or je.journal_entry_account_debit),
 					)
 					excl_tax_leg = min(
-						[je for je in filtered_journal_entries if je != tax_leg],
+						non_tax_entries,
 						key=lambda je: abs(je.journal_entry_account_credit or je.journal_entry_account_debit),
 					)
 				except (ValueError, TypeError) as e:
-					voucher.classification_debugging += f"\n🚀 {e}]'"
+					voucher.classification_debugging += f"\n🚀 {e}"
 
-				if all([tax_leg, incl_tax_leg, excl_tax_leg]):
-					voucher.classification_debugging += f"\n🚀 tax_leg = '{tax_leg.journal_entry_account}': '{tax_leg.journal_entry_account_credit or tax_leg.journal_entry_account_debit}'"
-					voucher.classification_debugging += f"\n🚀 incl_tax_leg = '{incl_tax_leg.journal_entry_account}': '{incl_tax_leg.journal_entry_account_credit or incl_tax_leg.journal_entry_account_debit}'"
-					voucher.classification_debugging += f"\n🚀 excl_tax_leg = '{excl_tax_leg.journal_entry_account}': '{excl_tax_leg.journal_entry_account_credit or excl_tax_leg.journal_entry_account_debit}'"
-
+				if incl_tax_leg and excl_tax_leg:
 					if excl_tax_leg.journal_entry_account_debit != 0:
 						voucher.classification = frappe.get_cached_value(
 							"Account",
@@ -481,7 +542,10 @@ class ValueaddedTaxReturn(Document):
 							incl_tax_leg.journal_entry_account_credit
 							or incl_tax_leg.journal_entry_account_debit
 						)
-						voucher.classification_debugging += f"\n🚀 'Classify Debit entries...' setting for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
+						voucher.classification_debugging += (
+							f"\n🚀 [strategy 3] excl_tax_leg = '{excl_tax_leg.journal_entry_account}'"
+							f"\n🚀 classification = '{voucher.classification}'"
+						)
 						continue
 					elif excl_tax_leg.journal_entry_account_credit != 0:
 						voucher.classification = frappe.get_cached_value(
@@ -493,7 +557,10 @@ class ValueaddedTaxReturn(Document):
 							incl_tax_leg.journal_entry_account_credit
 							or incl_tax_leg.journal_entry_account_debit
 						)
-						voucher.classification_debugging += f"\n🚀 'Classify Credit entries..' for Account '{excl_tax_leg.journal_entry_account}' = '{voucher.classification}'"
+						voucher.classification_debugging += (
+							f"\n🚀 [strategy 3] excl_tax_leg = '{excl_tax_leg.journal_entry_account}'"
+							f"\n🚀 classification = '{voucher.classification}'"
+						)
 						continue
 
 		return [voucher.voucher for voucher in vouchers.values()]
@@ -501,64 +568,45 @@ class ValueaddedTaxReturn(Document):
 
 def transform_gl_entries(gl_entries, tax_accounts):
 	"""
-	Transform flat list of entries to a dict with voucher_no as key
-	        E.g.
+	Transform flat list of GL Entry rows into a dict of vouchers.
 
-	        [
-	                {
-	                        "journal_entry_total_credit": 15850,
-	                        "journal_entry_total_debit": 15850,
-	                        "name": "ACC-GLE-2024-11691",
-	                        "posting_date": "2024-03-01",
-	                        .
-	                        .
-	                        .
-	                        "voucher_no": "ACC-JV-2024-00835",
-	                        "voucher_type": "Journal Entry",
-	                }
-	        ]
-
-	        becomes
-
-	        [
-	                {
-	                        "ACC-JV-2024-00835":
-	                                {
-	                                        "voucher": {
-	                                                "journal_entry_total_credit": 15850,
-	                                                "journal_entry_total_debit": 15850,
-	                                                "name": "ACC-GLE-2024-11691",
-	                                                "posting_date": "2024-03-01",
-	                                                .
-	                                                .
-	                                                .
-	                                                "voucher_no": "ACC-JV-2024-00835",
-	                                                "voucher_type": "Journal Entry",
-	                                        }
-	                                        "linked_journal_entries": [
-	                                                .
-	                                                .
-	                                                .
-	                                        ]
-	                                }
-	                }
-	        ]
+	For Journal Entries: one entry per tax-account GL Entry (keyed by gle.name).
+	All entries for the same JE share a deduplicated linked_journal_entries list.
+	For Sales/Purchase Invoices: one entry per voucher_no (existing behaviour).
 	"""
+	# Pass 1: collect unique JEA rows per JE voucher_no, deduplicated by idx.
+	# The query cross-joins every GLE row with every JEA row, producing duplicates.
+	je_jea_rows = {}  # {voucher_no: {idx: entry}}
+	for entry in gl_entries:
+		if entry.voucher_type == "Journal Entry":
+			vno = entry.voucher_no
+			idx = entry.journal_entry_account_idx
+			if vno not in je_jea_rows:
+				je_jea_rows[vno] = {}
+			if idx not in je_jea_rows[vno]:
+				je_jea_rows[vno][idx] = entry
+
+	# Pass 2: build the vouchers dict.
 	vouchers = {}
 	for entry in gl_entries:
-		voucher_no = entry.voucher_no
-		if voucher_no not in vouchers:
-			vouchers[voucher_no] = frappe._dict({"voucher": entry, "linked_journal_entries": []})
+		vno = entry.voucher_no
+		if entry.voucher_type == "Journal Entry":
+			if entry.account in tax_accounts:
+				key = entry.name
+				if key not in vouchers:
+					linked = list(je_jea_rows.get(vno, {}).values())
+					vouchers[key] = frappe._dict({"voucher": entry, "linked_journal_entries": linked})
 		else:
-			# If the new entry is from a tax account, and the old one is not, then it becomes the main voucher
-			if (
-				hasattr(entry, "account")
-				and hasattr(vouchers[voucher_no].voucher, "account")
-				and entry.account in tax_accounts
-				and vouchers[voucher_no].voucher.account not in tax_accounts
-			):
-				vouchers[voucher_no].voucher = entry
-
-		vouchers[voucher_no]["linked_journal_entries"].append(entry)
+			if vno not in vouchers:
+				vouchers[vno] = frappe._dict({"voucher": entry, "linked_journal_entries": []})
+			else:
+				if (
+					hasattr(entry, "account")
+					and hasattr(vouchers[vno].voucher, "account")
+					and entry.account in tax_accounts
+					and vouchers[vno].voucher.account not in tax_accounts
+				):
+					vouchers[vno].voucher = entry
+			vouchers[vno]["linked_journal_entries"].append(entry)
 
 	return vouchers

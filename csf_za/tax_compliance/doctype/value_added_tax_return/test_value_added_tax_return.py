@@ -484,3 +484,234 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		)
 		self.assertEqual(write_off_entry.tax_amount, 15)
 		self.assertEqual(write_off_entry.incl_tax_amount, 115)
+
+	def test_journal_entry_multiple_vat_lines(self):
+		expense_account_1 = create_account(
+			"Expense 1", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_1.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		expense_account_1.save()
+
+		expense_account_2 = create_account(
+			"Expense 2", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_2.custom_vat_return_debit_classification = (
+			"Input - A Capital goods and/or services supplied to you (local)"
+		)
+		expense_account_2.save()
+
+		bank_account = create_account("Bank Test", "Current Assets - _TC", self.company, account_type="Bank")
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-21",
+				"accounts": [
+					{"account": expense_account_1.name, "debit_in_account_currency": 200},
+					{"account": self.vat_account.name, "debit_in_account_currency": 30},
+					{"account": expense_account_2.name, "debit_in_account_currency": 100},
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": bank_account.name, "credit_in_account_currency": 345},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 2)
+		total_input_tax = sum(d.tax_amount for d in vat_return.gl_entries)
+		self.assertEqual(total_input_tax, 45)
+
+	def test_journal_entry_multiple_vat_lines_summary_totals(self):
+		expense_account_1 = create_account(
+			"Expense 1", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_1.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		expense_account_1.save()
+
+		expense_account_2 = create_account(
+			"Expense 2", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_2.custom_vat_return_debit_classification = (
+			"Input - A Capital goods and/or services supplied to you (local)"
+		)
+		expense_account_2.save()
+
+		bank_account = create_account("Bank Test", "Current Assets - _TC", self.company, account_type="Bank")
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-21",
+				"accounts": [
+					{"account": expense_account_1.name, "debit_in_account_currency": 200},
+					{"account": self.vat_account.name, "debit_in_account_currency": 30},
+					{"account": expense_account_2.name, "debit_in_account_currency": 100},
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": bank_account.name, "credit_in_account_currency": 345},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 2)
+		self.assertEqual(sum(d.tax_amount for d in vat_return.gl_entries), 45)
+		self.assertEqual(vat_return.total_input_tax, 45)
+
+	def test_journal_entry_multiple_vat_legs_classification(self):
+		expense_account_1 = create_account(
+			"Expense 1", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_1.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		expense_account_1.save()
+
+		expense_account_2 = create_account(
+			"Expense 2", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account_2.custom_vat_return_debit_classification = (
+			"Input - A Capital goods and/or services supplied to you (local)"
+		)
+		expense_account_2.save()
+
+		bank_account = create_account("Bank Test", "Current Assets - _TC", self.company, account_type="Bank")
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-21",
+				"accounts": [
+					{"account": expense_account_1.name, "debit_in_account_currency": 200},
+					{"account": self.vat_account.name, "debit_in_account_currency": 30},
+					{"account": expense_account_2.name, "debit_in_account_currency": 100},
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": bank_account.name, "credit_in_account_currency": 345},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 2)
+
+		rows_by_tax = {row.tax_amount: row for row in vat_return.gl_entries}
+
+		row_30 = rows_by_tax[30]
+		self.assertEqual(row_30.classification, "Input - C Other goods supplied to you (excl capital goods)")
+		self.assertEqual(row_30.incl_tax_amount, 230)
+
+		row_15 = rows_by_tax[15]
+		self.assertEqual(
+			row_15.classification, "Input - A Capital goods and/or services supplied to you (local)"
+		)
+		self.assertEqual(row_15.incl_tax_amount, 115)
+
+		self.assertEqual(vat_return.total_input_tax, 45)
+
+	def test_journal_entry_multiple_vat_legs_same_amount(self):
+		expense_account = create_account(
+			"Expense Same", "Direct Expenses - _TC", self.company, account_type="Expense Account"
+		)
+		expense_account.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		expense_account.save()
+
+		bank_account = create_account("Bank Same", "Current Assets - _TC", self.company, account_type="Bank")
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-21",
+				"accounts": [
+					{"account": expense_account.name, "debit_in_account_currency": 100},
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": expense_account.name, "debit_in_account_currency": 100},
+					{"account": self.vat_account.name, "debit_in_account_currency": 15},
+					{"account": bank_account.name, "credit_in_account_currency": 230},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 2)
+		self.assertEqual(sum(d.tax_amount for d in vat_return.gl_entries), 30)
