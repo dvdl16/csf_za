@@ -178,7 +178,6 @@ class ValueaddedTaxReturn(Document):
 		"""
 		vat_return_settings = frappe.get_cached_doc("Value-added Tax Return Settings", self.company)
 
-		# Construct the query using Frappe query builder
 		gle = frappe.qb.DocType("GL Entry")
 		je = frappe.qb.DocType("Journal Entry")
 		jea = frappe.qb.DocType("Journal Entry Account")
@@ -188,6 +187,35 @@ class ValueaddedTaxReturn(Document):
 		pitc = frappe.qb.DocType("Purchase Taxes and Charges")
 
 		tax_accounts = [row.account for row in vat_return_settings.tax_accounts]
+
+		classified_accounts = frappe.get_all(
+			"Account",
+			filters={"company": self.company},
+			or_filters=[
+				["custom_vat_return_debit_classification", "not in", ["", None]],
+				["custom_vat_return_credit_classification", "not in", ["", None]],
+			],
+			pluck="name",
+		)
+
+		account_condition = gle.account.isin(tax_accounts) | (
+			(gle.voucher_type == "Sales Invoice")
+			& si.taxes_and_charges.isnotnull()
+			& si.debit_to.isnotnull()
+			& (gle.account == si.debit_to)
+			# Exclude Purchase Invoices with 0 tax for now
+			# | (
+			# 	(gle.voucher_type == "Purchase Invoice")
+			# 	& pi.taxes_and_charges.isnotnull()
+			# 	& pi.credit_to.isnotnull()
+			# 	& (gle.account == pi.credit_to)
+			# )
+		)
+
+		if classified_accounts:
+			account_condition = account_condition | (
+				(gle.voucher_type == "Journal Entry") & gle.account.isin(classified_accounts)
+			)
 
 		query = (
 			frappe.qb.from_(gle)
@@ -230,33 +258,15 @@ class ValueaddedTaxReturn(Document):
 				.as_("taxes_and_charges_template"),
 			)
 			.where(
-				(gle.posting_date >= self.date_from)
-				& (gle.posting_date <= self.date_to)
-				& (
-					gle.account.isin(tax_accounts)
-					| (
-						(gle.voucher_type == "Sales Invoice")
-						& si.taxes_and_charges.isnotnull()
-						& si.debit_to.isnotnull()
-						& (gle.account == si.debit_to)
-					)
-					# Exclude Purchase Invoices with 0 tax for now
-					# | (
-					# 	(gle.voucher_type == "Purchase Invoice")
-					# 	& pi.taxes_and_charges.isnotnull()
-					# 	& pi.credit_to.isnotnull()
-					# 	& (gle.account == pi.credit_to)
-					# )
-				)
+				(gle.posting_date >= self.date_from) & (gle.posting_date <= self.date_to) & account_condition
 			)
 		)
 
-		# Execute the query and fetch the result as a list of dictionaries
 		result = query.run(as_dict=True)
 
-		return self.process_gl_entries(result)
+		return self.process_gl_entries(result, classified_accounts=classified_accounts)
 
-	def process_gl_entries(self, gl_entries):
+	def process_gl_entries(self, gl_entries, classified_accounts=None):
 		"""
 		Perform classification for each journal entry:
 		        - If it's linked to a Sales Invoice or Purchase Invoice, get the Taxes and Charges Template
@@ -266,13 +276,22 @@ class ValueaddedTaxReturn(Document):
 		vat_return_settings = frappe.get_cached_doc("Value-added Tax Return Settings", self.company)
 		tax_accounts = [row.account for row in vat_return_settings.tax_accounts]
 
-		# The field names on 'Value-added Tax Return Settings' correspond to classifications
-		# Create a dict of these fields' values and field names
+		if classified_accounts is None:
+			classified_accounts = frappe.get_all(
+				"Account",
+				filters={"company": self.company},
+				or_filters=[
+					["custom_vat_return_debit_classification", "not in", ["", None]],
+					["custom_vat_return_credit_classification", "not in", ["", None]],
+				],
+				pluck="name",
+			)
+
 		taxes_and_charges_map = [
 			entry for entry in VAT_RETURN_SETTING_FIELD_MAP if vat_return_settings.get(entry["field_name"])
 		]
 
-		vouchers = transform_gl_entries(gl_entries, tax_accounts)
+		vouchers = transform_gl_entries(gl_entries, tax_accounts, classified_accounts)
 
 		for _voucher_no, item in vouchers.items():
 			voucher = item.voucher
@@ -287,6 +306,7 @@ class ValueaddedTaxReturn(Document):
 				voucher.tax_amount = 0
 
 			voucher.classification_debugging = "🚀"
+
 			if voucher.voucher_type in ("Sales Invoice", "Purchase Invoice"):
 				voucher.incl_tax_amount = (
 					voucher.sales_invoice_taxes_total or voucher.purchase_invoice_taxes_total
@@ -334,6 +354,28 @@ class ValueaddedTaxReturn(Document):
 
 			if voucher.voucher_type == "Journal Entry":
 				voucher.classification_debugging += "\n🚀 voucher_type is 'Journal Entry'"
+
+				# Exempt / no-VAT Journal Entry: the voucher is a classified non-tax account entry
+				# (e.g. Interest Received with custom_vat_return_credit_classification = "Output - E Exempt").
+				# tax_amount is already 0. Derive classification and incl_tax_amount from the GL Entry.
+				if voucher.account not in tax_accounts:
+					amount = voucher.general_ledger_debit or voucher.general_ledger_credit or 0
+					voucher.incl_tax_amount = amount
+					if voucher.general_ledger_debit:
+						voucher.classification = frappe.get_cached_value(
+							"Account", voucher.account, "custom_vat_return_debit_classification"
+						)
+					else:
+						voucher.classification = frappe.get_cached_value(
+							"Account", voucher.account, "custom_vat_return_credit_classification"
+						)
+					voucher.classification_debugging += (
+						f"\n🚀 [exempt JE] account='{voucher.account}'"
+						f"\n🚀 incl_tax_amount={voucher.incl_tax_amount}"
+						f"\n🚀 classification='{voucher.classification}'"
+					)
+					continue
+
 				# Process pairs of Journal Entry Account child records
 				# E.g.
 				#
@@ -566,7 +608,7 @@ class ValueaddedTaxReturn(Document):
 		return [voucher.voucher for voucher in vouchers.values()]
 
 
-def transform_gl_entries(gl_entries, tax_accounts):
+def transform_gl_entries(gl_entries, tax_accounts, classified_accounts=None):
 	"""
 	Transform flat list of GL Entry rows into a dict of vouchers.
 
@@ -574,6 +616,9 @@ def transform_gl_entries(gl_entries, tax_accounts):
 	All entries for the same JE share a deduplicated linked_journal_entries list.
 	For Sales/Purchase Invoices: one entry per voucher_no (existing behaviour).
 	"""
+	tax_accounts_set = set(tax_accounts)
+	classified_accounts_set = set(classified_accounts or [])
+
 	# Pass 1: collect unique JEA rows per JE voucher_no, deduplicated by idx.
 	# The query cross-joins every GLE row with every JEA row, producing duplicates.
 	je_jea_rows = {}  # {voucher_no: {idx: entry}}
@@ -588,14 +633,19 @@ def transform_gl_entries(gl_entries, tax_accounts):
 
 	# Pass 2: build the vouchers dict.
 	vouchers = {}
+	je_has_tax_leg = set()  # voucher_nos that have at least one tax-account GL Entry
+	je_classified_non_tax = {}  # {voucher_no: [GL Entry rows for classified non-tax accounts]}
 	for entry in gl_entries:
 		vno = entry.voucher_no
 		if entry.voucher_type == "Journal Entry":
-			if entry.account in tax_accounts:
+			if entry.account in tax_accounts_set:
+				je_has_tax_leg.add(vno)
 				key = entry.name
 				if key not in vouchers:
 					linked = list(je_jea_rows.get(vno, {}).values())
 					vouchers[key] = frappe._dict({"voucher": entry, "linked_journal_entries": linked})
+			elif entry.account in classified_accounts_set:
+				je_classified_non_tax.setdefault(vno, []).append(entry)
 		else:
 			if vno not in vouchers:
 				vouchers[vno] = frappe._dict({"voucher": entry, "linked_journal_entries": []})
@@ -603,10 +653,20 @@ def transform_gl_entries(gl_entries, tax_accounts):
 				if (
 					hasattr(entry, "account")
 					and hasattr(vouchers[vno].voucher, "account")
-					and entry.account in tax_accounts
-					and vouchers[vno].voucher.account not in tax_accounts
+					and entry.account in tax_accounts_set
+					and vouchers[vno].voucher.account not in tax_accounts_set
 				):
 					vouchers[vno].voucher = entry
 			vouchers[vno]["linked_journal_entries"].append(entry)
+
+	# Pass 3: for JEs with no tax leg, add each classified non-tax entry as its own voucher.
+	# JEs that already have a tax leg are handled above — skip them to avoid double-counting.
+	for vno, entries in je_classified_non_tax.items():
+		if vno not in je_has_tax_leg:
+			for entry in entries:
+				key = entry.name
+				if key not in vouchers:
+					linked = list(je_jea_rows.get(vno, {}).values())
+					vouchers[key] = frappe._dict({"voucher": entry, "linked_journal_entries": linked})
 
 	return vouchers

@@ -668,6 +668,98 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 
 		self.assertEqual(vat_return.total_input_tax, 45)
 
+	def test_journal_entry_exempt_no_vat_leg(self):
+		interest_account = create_account("Interest Received Test", "Indirect Income - _TC", self.company)
+		interest_account.custom_vat_return_credit_classification = "Output - E Exempt"
+		interest_account.save()
+
+		bank_account = create_account(
+			"Bank Exempt Test", "Current Assets - _TC", self.company, account_type="Bank"
+		)
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-15",
+				"accounts": [
+					{"account": bank_account.name, "debit_in_account_currency": 1000},
+					{"account": interest_account.name, "credit_in_account_currency": 1000},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 1)
+
+		row = vat_return.gl_entries[0]
+		self.assertEqual(row.classification, "Output - E Exempt")
+		self.assertEqual(row.tax_amount, 0)
+		self.assertEqual(row.incl_tax_amount, 1000)
+		self.assertEqual(vat_return.exempt_excl, 1000)
+
+	def test_journal_entry_exempt_with_vat_leg_not_duplicated(self):
+		exempt_account = create_account("Exempt Income Test", "Indirect Income - _TC", self.company)
+		exempt_account.custom_vat_return_credit_classification = "Output - E Exempt"
+		exempt_account.save()
+
+		bank_account = create_account(
+			"Bank Exempt2 Test", "Current Assets - _TC", self.company, account_type="Bank"
+		)
+
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": "2025-08-15",
+				"accounts": [
+					{"account": bank_account.name, "debit_in_account_currency": 115},
+					{"account": self.vat_account.name, "credit_in_account_currency": 15},
+					{"account": exempt_account.name, "credit_in_account_currency": 100},
+				],
+			}
+		)
+		je.insert()
+		je.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+		vat_return.gl_entries = []
+		for gle in gl_entries_data:
+			vat_return.append("gl_entries", gle)
+		vat_return.save()
+
+		self.assertEqual(len(vat_return.gl_entries), 1)
+		self.assertEqual(vat_return.gl_entries[0].tax_amount, 15)
+
 	def test_journal_entry_multiple_vat_legs_same_amount(self):
 		expense_account = create_account(
 			"Expense Same", "Direct Expenses - _TC", self.company, account_type="Expense Account"
