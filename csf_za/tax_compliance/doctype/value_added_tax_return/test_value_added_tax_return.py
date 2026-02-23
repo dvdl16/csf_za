@@ -807,3 +807,138 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 
 		self.assertEqual(len(vat_return.gl_entries), 2)
 		self.assertEqual(sum(d.tax_amount for d in vat_return.gl_entries), 30)
+
+	def test_expense_claim_classification(self):
+		"""
+		Expense Claim with one standard-rate tax row should be fetched, have
+		incl_tax_amount set, and be auto-classified via the expense type's
+		default account.
+		"""
+		VAT_ACCOUNT = "VAT Control Account"
+		EXPENSE_ACCOUNT = "Telephone and Fax"
+
+		mock_settings = frappe._dict({"tax_accounts": [frappe._dict({"account": VAT_ACCOUNT})]})
+		mock_vouchers = frappe._dict(
+			{
+				"HR-EXP-2026-00001": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Expense Claim",
+								"voucher_no": "HR-EXP-2026-00001",
+								"account": VAT_ACCOUNT,
+								"general_ledger_debit": 1.5,
+								"general_ledger_credit": 0,
+								"expense_claim_taxes_tax_amount": 1.5,
+								"expense_claim_taxes_total": 11.5,
+								"expense_claim_grand_total": 11.5,
+								"taxes_and_charges_template": None,
+								"is_cancelled": 0,
+							}
+						),
+						"linked_journal_entries": [],
+					}
+				)
+			}
+		)
+
+		vat_return = frappe.new_doc("Value-added Tax Return")
+		vat_return.company = self.company
+
+		with (
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries",
+				return_value=mock_vouchers,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc",
+				return_value=mock_settings,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_all",
+				return_value=["Calls"],
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.db.get_value",
+				return_value=EXPENSE_ACCOUNT,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value",
+				return_value="Input - C Other goods supplied to you (excl capital goods)",
+			),
+		):
+			results = vat_return.process_gl_entries([])
+
+		self.assertEqual(len(results), 1)
+		result = results[0]
+		self.assertEqual(result.voucher_type, "Expense Claim")
+		self.assertEqual(result.tax_amount, 1.5)
+		self.assertEqual(result.incl_tax_amount, 11.5)
+		self.assertEqual(
+			result.classification,
+			"Input - C Other goods supplied to you (excl capital goods)",
+		)
+
+	def test_expense_claim_unclassified_when_no_account_configured(self):
+		"""
+		Expense Claim whose expense type has no default_account for this company
+		should have incl_tax_amount set but remain unclassified.
+		"""
+		VAT_ACCOUNT = "VAT Control Account"
+
+		mock_settings = frappe._dict({"tax_accounts": [frappe._dict({"account": VAT_ACCOUNT})]})
+		mock_vouchers = frappe._dict(
+			{
+				"HR-EXP-2026-00002": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Expense Claim",
+								"voucher_no": "HR-EXP-2026-00002",
+								"account": VAT_ACCOUNT,
+								"general_ledger_debit": 3.0,
+								"general_ledger_credit": 0,
+								"expense_claim_taxes_tax_amount": 3.0,
+								"expense_claim_taxes_total": 23.0,
+								"expense_claim_grand_total": 23.0,
+								"taxes_and_charges_template": None,
+								"is_cancelled": 0,
+							}
+						),
+						"linked_journal_entries": [],
+					}
+				)
+			}
+		)
+
+		vat_return = frappe.new_doc("Value-added Tax Return")
+		vat_return.company = self.company
+
+		with (
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries",
+				return_value=mock_vouchers,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc",
+				return_value=mock_settings,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_all",
+				return_value=["Calls"],
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.db.get_value",
+				return_value=None,
+			),
+			patch(
+				"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value",
+				return_value=None,
+			),
+		):
+			results = vat_return.process_gl_entries([])
+
+		self.assertEqual(len(results), 1)
+		result = results[0]
+		self.assertEqual(result.incl_tax_amount, 23.0)
+		self.assertIsNone(result.classification)

@@ -185,6 +185,10 @@ class ValueaddedTaxReturn(Document):
 		sitc = frappe.qb.DocType("Sales Taxes and Charges")
 		pi = frappe.qb.DocType("Purchase Invoice")
 		pitc = frappe.qb.DocType("Purchase Taxes and Charges")
+		expense_claims_available = frappe.db.table_exists("Expense Claim")
+		if expense_claims_available:
+			ec = frappe.qb.DocType("Expense Claim")
+			ectc = frappe.qb.DocType("Expense Taxes and Charges")
 
 		tax_accounts = [row.account for row in vat_return_settings.tax_accounts]
 
@@ -261,6 +265,19 @@ class ValueaddedTaxReturn(Document):
 				(gle.posting_date >= self.date_from) & (gle.posting_date <= self.date_to) & account_condition
 			)
 		)
+
+		if expense_claims_available:
+			query = (
+				query.left_join(ec)
+				.on((gle.voucher_type == "Expense Claim") & (ec.name == gle.voucher_no))
+				.left_join(ectc)
+				.on((ectc.parent == ec.name) & (ectc.account_head == gle.account))
+				.select(
+					ectc.tax_amount.as_("expense_claim_taxes_tax_amount"),
+					ectc.total.as_("expense_claim_taxes_total"),
+					ec.grand_total.as_("expense_claim_grand_total"),
+				)
+			)
 
 		result = query.run(as_dict=True)
 
@@ -351,6 +368,52 @@ class ValueaddedTaxReturn(Document):
 						continue
 				else:
 					voucher.classification_debugging += "\n🚀 No Taxes and Charges template on Invoice, or Taxes and Charges template is not set in 'Value-added Return Settings'"
+
+			elif voucher.voucher_type == "Expense Claim":
+				voucher.incl_tax_amount = (
+					voucher.expense_claim_taxes_total
+					or voucher.expense_claim_grand_total
+					or voucher.general_ledger_debit
+					or voucher.general_ledger_credit
+				)
+
+				if voucher.incl_tax_amount and voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
+					voucher.tax_amount = voucher.tax_amount * -1
+
+				expense_types = frappe.get_all(
+					"Expense Claim Detail",
+					filters={"parent": voucher.voucher_no},
+					pluck="expense_type",
+				)
+				classifications = set()
+				for expense_type in expense_types:
+					default_account = frappe.db.get_value(
+						"Expense Claim Account",
+						{"parent": expense_type, "company": self.company},
+						"default_account",
+					)
+					if default_account:
+						classification = frappe.get_cached_value(
+							"Account", default_account, "custom_vat_return_debit_classification"
+						)
+						if classification:
+							classifications.add(classification)
+
+				if len(classifications) == 1:
+					voucher.classification = classifications.pop()
+
+				voucher.classification_debugging += (
+					f"\n🚀 voucher_type is 'Expense Claim'"
+					f"\n🚀 expense_claim_taxes_total = {voucher.expense_claim_taxes_total}"
+					f"\n🚀 expense_claim_grand_total  = {voucher.expense_claim_grand_total}"
+					f"\n🚀 incl_tax_amount            = {voucher.incl_tax_amount}"
+					f"\n🚀 expense_types              = {expense_types}"
+					f"\n🚀 classifications found      = {classifications}"
+					f"\n🚀 classification             = '{voucher.classification}'"
+				)
+
+				if voucher.classification:
+					continue
 
 			if voucher.voucher_type == "Journal Entry":
 				voucher.classification_debugging += "\n🚀 voucher_type is 'Journal Entry'"
