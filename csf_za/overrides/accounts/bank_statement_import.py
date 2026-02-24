@@ -159,6 +159,10 @@ class CustomBankStatementImport(BankStatementImport):
 			"Balance",
 			"Has Attachments",
 		]
+		# remove UTF-8 BOM from first header cell if present
+		if data and data[0] and isinstance(data[0][0], str):
+			data[0][0] = data[0][0].lstrip("\ufeff")
+
 		if data[0][:9] != expected_headers[:9]:
 			frappe.throw(
 				_("Unexpected headers in CSV. Expected: {0} in first row").format(
