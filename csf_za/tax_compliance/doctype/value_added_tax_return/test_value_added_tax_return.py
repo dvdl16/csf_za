@@ -942,3 +942,87 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		result = results[0]
 		self.assertEqual(result.incl_tax_amount, 23.0)
 		self.assertIsNone(result.classification)
+
+	def test_gl_entries_are_scoped_to_company(self):
+		"""
+		GL entries from a second company must not appear in a VAT Return
+		created for the first company, even when they fall in the same
+		date range and use the same account type.
+		"""
+		other_company_name = "_Test Company with perpetual inventory"
+
+		# Resolve parent accounts dynamically — they differ per chart of accounts template.
+		def _group(root_type: str) -> str:
+			return frappe.db.get_value(
+				"Account",
+				{"company": other_company_name, "is_group": 1, "root_type": root_type},
+				"name",
+				order_by="lft asc",
+			)
+
+		other_vat_account = create_account(
+			"VAT Other Company",
+			_group("Asset"),
+			other_company_name,
+			account_type="Tax",
+		)
+
+		other_expense_account = create_account(
+			"Expense Other Company",
+			_group("Expense"),
+			other_company_name,
+			account_type="Expense Account",
+		)
+		other_expense_account.custom_vat_return_debit_classification = (
+			"Input - C Other goods supplied to you (excl capital goods)"
+		)
+		other_expense_account.save()
+
+		other_bank_account = create_account(
+			"Bank Other Company",
+			_group("Asset"),
+			other_company_name,
+			account_type="Bank",
+		)
+
+		je_other = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": other_company_name,
+				"posting_date": "2025-08-15",
+				"accounts": [
+					{"account": other_expense_account.name, "debit_in_account_currency": 100},
+					{"account": other_vat_account.name, "debit_in_account_currency": 15},
+					{"account": other_bank_account.name, "credit_in_account_currency": 115},
+				],
+			}
+		)
+		je_other.insert()
+		je_other.submit()
+
+		vat_return = frappe.get_doc(
+			{
+				"doctype": "Value-added Tax Return",
+				"company": self.company,
+				"date_from": "2025-08-01",
+				"date_to": "2025-08-31",
+			}
+		)
+		vat_return.insert()
+
+		gl_entries_data = vat_return.get_gl_entries()
+
+		returned_voucher_nos = {entry.get("voucher_no") for entry in gl_entries_data}
+		self.assertNotIn(
+			je_other.name,
+			returned_voucher_nos,
+			"Journal Entry from another company appeared in the VAT Return",
+		)
+
+		returned_accounts = {entry.get("account") for entry in gl_entries_data}
+		self.assertNotIn(
+			other_vat_account.name,
+			returned_accounts,
+			"GL entry from another company leaked into the VAT Return",
+		)
