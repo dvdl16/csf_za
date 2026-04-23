@@ -228,11 +228,19 @@ class ValueaddedTaxReturn(Document):
 			.left_join(jea)
 			.on(jea.parent == je.name)
 			.left_join(si)
-			.on((gle.voucher_type == "Sales Invoice") & (si.name == gle.voucher_no))
+			.on(
+				(gle.voucher_type == "Sales Invoice")
+				& (si.name == gle.voucher_no)
+				& (si.company == self.company)
+			)
 			.left_join(sitc)
 			.on((sitc.parent == si.name) & (sitc.account_head == gle.account))
 			.left_join(pi)
-			.on((gle.voucher_type == "Purchase Invoice") & (pi.name == gle.voucher_no))
+			.on(
+				(gle.voucher_type == "Purchase Invoice")
+				& (pi.name == gle.voucher_no)
+				& (pi.company == self.company)
+			)
 			.left_join(pitc)
 			.on((pitc.parent == pi.name) & (pitc.account_head == gle.account))
 			.select(
@@ -262,14 +270,21 @@ class ValueaddedTaxReturn(Document):
 				.as_("taxes_and_charges_template"),
 			)
 			.where(
-				(gle.posting_date >= self.date_from) & (gle.posting_date <= self.date_to) & account_condition
+				(gle.company == self.company)
+				& (gle.posting_date >= self.date_from)
+				& (gle.posting_date <= self.date_to)
+				& account_condition
 			)
 		)
 
 		if expense_claims_available:
 			query = (
 				query.left_join(ec)
-				.on((gle.voucher_type == "Expense Claim") & (ec.name == gle.voucher_no))
+				.on(
+					(gle.voucher_type == "Expense Claim")
+					& (ec.name == gle.voucher_no)
+					& (ec.company == self.company)
+				)
 				.left_join(ectc)
 				.on((ectc.parent == ec.name) & (ectc.account_head == gle.account))
 				.select(
