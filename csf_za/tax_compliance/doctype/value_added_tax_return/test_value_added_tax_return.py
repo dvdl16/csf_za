@@ -428,6 +428,116 @@ class TestValueaddedTaxReturn(FrappeTestCase):
 		self.assertEqual(results[0].tax_amount, 0)
 		self.assertEqual(results[0].incl_tax_amount, 100)
 
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_doc"
+	)
+	@patch("csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.transform_gl_entries")
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.frappe.get_cached_value"
+	)
+	@patch(
+		"csf_za.tax_compliance.doctype.value_added_tax_return.value_added_tax_return.VAT_RETURN_SETTING_FIELD_MAP",
+		[
+			{
+				"field_name": "zero_rated_vat_field",
+				"classification": "Output - C Zero Rated (excl goods exported)",
+				"reference_doctype": "Sales Invoice",
+			},
+			{
+				"field_name": "zero_rated_input_field",
+				"classification": "Input - C Other goods supplied to you (excl capital goods)",
+				"reference_doctype": "Purchase Invoice",
+			},
+		],
+	)
+	def test_process_gl_entries_with_zero_rate_credit_note(
+		self, mock_cached_value, mock_transform, mock_get_cached_doc
+	):
+		"""
+		A zero-rated Credit Note has no tax GL Entry, so incl_tax_amount falls back to the
+		control account leg. The reversal credits the receivable (debits the payable), which
+		must produce a negative amount so the VAT return deducts instead of adds.
+		"""
+		mock_settings = frappe._dict(
+			{
+				"tax_accounts": [frappe._dict({"account": "VAT Account"})],
+				"zero_rated_vat_field": "Zero Rated VAT Template",
+				"zero_rated_input_field": "Zero Rated Input Template",
+			}
+		)
+		mock_vouchers = frappe._dict(
+			{
+				"SCN-001": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Sales Invoice",
+								"account": "Debtors",  # Not a tax account
+								"general_ledger_debit": 0,
+								"general_ledger_credit": 100,
+								"sales_invoice_taxes_total": None,
+								"taxes_and_charges_template": "Zero Rated VAT Template",
+								"is_cancelled": 0,
+							}
+						)
+					}
+				),
+				"SAL-001": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Sales Invoice",
+								"account": "Debtors",
+								"general_ledger_debit": 100,
+								"general_ledger_credit": 0,
+								"sales_invoice_taxes_total": None,
+								"taxes_and_charges_template": "Zero Rated VAT Template",
+								"is_cancelled": 0,
+							}
+						)
+					}
+				),
+				"PCN-001": frappe._dict(
+					{
+						"voucher": frappe._dict(
+							{
+								"voucher_type": "Purchase Invoice",
+								"account": "Creditors",  # Not a tax account
+								"general_ledger_debit": 100,
+								"general_ledger_credit": 0,
+								"purchase_invoice_taxes_total": None,
+								"taxes_and_charges_template": "Zero Rated Input Template",
+								"is_cancelled": 0,
+							}
+						)
+					}
+				),
+			}
+		)
+
+		mock_get_cached_doc.return_value = mock_settings
+		mock_transform.return_value = mock_vouchers
+		mock_cached_value.side_effect = lambda doctype, docname, fieldname: "Classified"
+
+		vat_return = frappe.new_doc("Value-added Tax Return")
+		results = vat_return.process_gl_entries([])
+
+		self.assertEqual(len(results), 3)
+
+		# SCN-001: zero-rated Credit Note reverses the Sales Invoice
+		self.assertEqual(results[0].classification, "Output - C Zero Rated (excl goods exported)")
+		self.assertEqual(results[0].tax_amount, 0)
+		self.assertEqual(results[0].incl_tax_amount, -100)
+
+		# SAL-001: zero-rated Sales Invoice is unchanged
+		self.assertEqual(results[1].incl_tax_amount, 100)
+
+		# PCN-001: zero-rated Debit Note reverses the Purchase Invoice
+		self.assertEqual(
+			results[2].classification, "Input - C Other goods supplied to you (excl capital goods)"
+		)
+		self.assertEqual(results[2].incl_tax_amount, -100)
+
 	def test_journal_entry_write_off_classification(self):
 		# Create Journal Entry for write-off
 		je = frappe.get_doc(
