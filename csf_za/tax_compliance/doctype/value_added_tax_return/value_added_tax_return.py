@@ -345,8 +345,15 @@ class ValueaddedTaxReturn(Document):
 				)
 
 				# For vouchers with zero-rated tax (aka tax amount = 0), set the total amount
+				# from the control account leg. Net debit against credit so that reversals
+				# (Credit and Debit Notes) keep a negative sign
 				if not voucher.incl_tax_amount:
-					voucher.incl_tax_amount = voucher.general_ledger_debit or voucher.general_ledger_credit
+					debit = voucher.general_ledger_debit or 0
+					credit = voucher.general_ledger_credit or 0
+					if voucher.voucher_type == "Sales Invoice":
+						voucher.incl_tax_amount = debit - credit
+					else:
+						voucher.incl_tax_amount = credit - debit
 
 				# If the voucher_type is a reversal (e.g. Credit and Debit Notes, change the sign of tax_amount)
 				if voucher.incl_tax_amount < 0 and voucher.tax_amount > 0:
